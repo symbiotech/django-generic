@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>{% block head %}
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+    <title>{% block title %}{% block page_title %}{% endblock %} | {{ SITE_NAME }}{% endblock %}</title>
+    <link href="{{ STATIC_URL }}generic/css/global.css" rel="stylesheet" />
+    <link href="{{ STATIC_URL }}generic/css/screen.css?v=0.0.1" media="screen" rel="stylesheet" />
+     <!--[if lt IE 9]>
+        <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <![endif]-->
+  {% endblock %}</head>
+  <body class="{% block body_class %}{% endblock %}">
+    {% block body %}
+      <div id="container">
+        <header>
+          {% block header %}
+            {% block messages %}
+              {% include "generic/_messages.html" %}
+            {% endblock %}
+          {% endblock %}
+        </header>
+        <div id="content">
+          {% block content %}
+          {% endblock %}
+        </div>
+        <footer>
+		      <ul>
+            {% if user.is_authenticated and user.is_staff %}
+              {% if user.is_staff %}
+                <li><a href="{% url admin:index %}">Admin</a></li>
+              {% endif %}
+              <li><a href="{% url logout %}">Log out</a></li>
+            {% endif %}
+		      </ul>
+        </footer>
+      </div>
+    {% endblock %}
+    {% block javascript %}{# at the end for faster page loading #}
+      {% block jquery %}
+        {# Grab jQuery from CDN. Fall back to local if necessary #}
+        <script src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+        <script>
+          if(!window.jQuery){
+            document.write(
+              '<script src="{{ STATIC_URL }}generic/js/jquery-1.7.2.min.js"><\/script>'
+            );
+          }
+        </script>
+      {% endblock %}
+    {% endblock %}
+  </body>
+</html>
