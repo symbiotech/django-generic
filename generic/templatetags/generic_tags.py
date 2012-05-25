@@ -13,3 +13,8 @@ def field(field, *args, **kwargs):
 @register.filter
 def linkify(obj):
     return mark_safe('<a href="%s">%s</a>' % (obj.get_absolute_url(), obj))
+
+@register.filter
+@stringfilter
+def unbreakable(string):
+    return mark_safe(string.strip().replace(' ', '&nbsp;'))
