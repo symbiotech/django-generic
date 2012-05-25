@@ -1,0 +1,19 @@
+{% extends "admin/change_form.html" %}
+{% load generic_tags %}
+
+{% block form_top %}
+  {% if original and original.is_delible and original.deleted %}
+    {% block deleted_warning %}
+      <div class="module">
+        <h2>Deleted!</h2>
+        {% block deletion_description %}
+         <p>This {{ opts.verbose_name }} was deleted by <a href="{% admin_url original.deleted_by 'change' current_app %}">{{ original.deleted_by }}</a> at {{ original.deleted|time }} on {{ original.deleted|date }}.</p>
+        {% endblock %}
+        {% block undeletion_link %}
+          <p>Click <a href="{% admin_url original 'undelete' current_app %}">here</a> to "undelete" it.</p>
+        {% endblock %}
+      </div>
+    {% endblock %}
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

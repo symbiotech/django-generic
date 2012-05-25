@@ -1,8 +1,10 @@
 import re
 
 from django import template
+from django.core.urlresolvers import reverse
 from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
+from .. import models
 
 register = template.Library()
 
@@ -44,3 +46,16 @@ def unescape(text):
     return re.sub(
         '&(%s);' % '|'.join(ENTITIES),
         lambda match: ENTITIES[match.group(1)], text)
+
+
+def _get_admin_url(obj, view='change', admin_site_name='admin'):
+    return reverse(
+        '%(namespace)s:%(app)s_%(model)s_%(view)s' % {
+            'namespace': admin_site_name,
+            'app': obj._meta.app_label,
+            'model': obj._meta.module_name,
+            'view': view}, args=(obj.pk,))
+
+@register.simple_tag
+def admin_url(obj, view='change', admin_site_name='admin'):
+    return _get_admin_url(obj, view, admin_site_name)
