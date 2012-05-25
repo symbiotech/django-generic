@@ -1,5 +1,8 @@
+import re
+
 from django import template
 from django.utils.safestring import mark_safe
+
 register = template.Library()
 
 @register.inclusion_tag('_field.html')
@@ -18,3 +21,25 @@ def linkify(obj):
 @stringfilter
 def unbreakable(string):
     return mark_safe(string.strip().replace(' ', '&nbsp;'))
+
+HTML_COMMENTS = re.compile(r'<!--.*?-->', re.DOTALL)
+@register.filter
+def unescape(text):
+    ENTITIES = {
+        'amp': '&',
+        'lt': '<',
+        'gt': '>',
+        'quot': '"',
+        '#39': "'",
+        'nbsp': ' ',
+        'ndash': '-',
+        'rsquo': "'",
+        'rdquo': '"',
+        'lsquo': "'",
+        'ldquo': '"',
+        'middot': '*',
+        }
+    text = HTML_COMMENTS.sub('', text)
+    return re.sub(
+        '&(%s);' % '|'.join(ENTITIES),
+        lambda match: ENTITIES[match.group(1)], text)
