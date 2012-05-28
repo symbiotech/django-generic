@@ -2,6 +2,10 @@ from functools import wraps
 from django.conf import settings
 
 def cache_result_in_instance(method):
+    """
+    Caches the results of a method into its object instance using the passed
+    args as cache key (not the Django cache framework)
+    """
     @wraps(method)
     def wrapped_method(self, *args, **kwargs):
         force_reload = kwargs.pop('force_reload', False)
