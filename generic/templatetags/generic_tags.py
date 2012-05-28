@@ -2,7 +2,10 @@ import re
 
 from django import template
 from django.core.urlresolvers import reverse
-from django.template.defaultfilters import stringfilter
+from django.template import Node
+from django.template.defaultfilters import stringfilter, fix_ampersands
+from django.http import QueryDict
+
 from django.utils.safestring import mark_safe
 from urlparse import urlparse
 
@@ -180,8 +183,6 @@ If an attribute's value is an empty string, or [""] or None, the value remains, 
 If you try to =- a value from a list that doesn't contain that value, nothing happens.
 If you try to =- a value from a list where the value appears more than once, only the first value is removed.
 """
-from django.template.defaultfilters import fix_ampersands
-from django.http import QueryDict
 
 @register.tag(name='update_GET')
 def do_update_GET(parser, token):
