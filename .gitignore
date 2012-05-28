@@ -1,2 +1,13 @@
 *.pyc
 *~
+
+.DS_Store
+pip-log.txt
+*.egg-info
+
+# Aptana/pycharm/pydev stuff
+.tmp_*~
+.idea
+.project
+.pydevproject
+.settings*
