@@ -1,7 +1,7 @@
 <div id="{{ field.auto_id }}-field" class="field">
 {{ field.errors }}
 {% if show_label %}
-<label for="{{ field.auto_id }}">{% firstof label_override field.label %}{% if field.field.required %} *{% endif %}</label>
+<label for="{{ field.auto_id }}">{% firstof label_override field.label %}{% if field.field.required and show_star %} <span class="required-star">*</span>{% endif %}</label>
 {% endif %}
 {{ field }}
 {% if field.help_text %}<div id="{{ field.auto_id }}-help" class="help-text">{{ field.help_text|safe }}</div>{% endif %}

@@ -16,6 +16,7 @@ def field(field, *args, **kwargs):
     return {
         'field': field,
         'show_label': kwargs.get('show_label', True),
+        'show_star': kwargs.get('show_star', True),
         'label_override': kwargs.get('label_override', None),
         }
 
