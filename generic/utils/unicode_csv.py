@@ -17,7 +17,7 @@ class UTF8Recoder:
     def next(self):
         return self.reader.next().encode("utf-8")
 
-class UnicodeCSVReader:
+class Reader:
     """
     A CSV reader which will iterate over lines in the CSV file "f",
     which is encoded in the given encoding.
@@ -34,7 +34,7 @@ class UnicodeCSVReader:
     def __iter__(self):
         return self
 
-class UnicodeCSVWriter:
+class Writer:
     """
     A CSV writer which will write rows to CSV file "f",
     which is encoded in the given encoding.
