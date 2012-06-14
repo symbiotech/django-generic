@@ -1,7 +1,11 @@
+from django import http
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout as auth_logout
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render_to_response, redirect
+from django.conf.urls import url
 
 def server_error(request, template_name='500.html'):
     """
