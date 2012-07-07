@@ -6,13 +6,15 @@ class Command(BaseCommand):
     help = 'Set Site name and domain from settings.SITE_NAME/DOMAIN'
     def handle(self, *args, **options):
         try:
-            site = Site.objects.get()
+            site = Site.objects.get(id=settings.SITE_ID)
         except Site.DoesNotExist:
             site = Site.objects.create(
+                id=settings.SITE_ID,
                 domain=settings.SITE_DOMAIN,
-                name=settings.SITE_NAME)
+                name=settings.SITE_NAME,
+            )
         except Site.MultipleObjectsReturned:
-            raise CommandError("Must have only one Site.\n")
+            raise # multiple sites with same ID?!
         else:
             site.domain = settings.SITE_DOMAIN
             site.name = settings.SITE_NAME
