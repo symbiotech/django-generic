@@ -56,6 +56,7 @@ def unescape(text):
         'lsquo': "'",
         'ldquo': '"',
         'middot': '*',
+        'hellip': '...',
         }
     text = HTML_COMMENTS.sub('', text)
     return re.sub(
