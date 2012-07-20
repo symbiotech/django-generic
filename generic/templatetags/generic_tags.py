@@ -51,6 +51,7 @@ def unescape(text):
         '#39': "'",
         'nbsp': ' ',
         'ndash': '-',
+        'mdash': '--',
         'rsquo': "'",
         'rdquo': '"',
         'lsquo': "'",
