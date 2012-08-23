@@ -1,5 +1,6 @@
 import re
 
+from django import forms
 from django import template
 from django.core.urlresolvers import reverse
 from django.template import Node
@@ -18,7 +19,8 @@ def field(field, *args, **kwargs):
         'show_label': kwargs.get('show_label', True),
         'show_star': kwargs.get('show_star', True),
         'label_override': kwargs.get('label_override', None),
-        }
+        'checkbox': isinstance(field.widget, forms.CheckboxInput),
+    }
 
 @register.filter
 def linkify(obj):
