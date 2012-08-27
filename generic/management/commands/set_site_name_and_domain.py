@@ -21,4 +21,4 @@ class Command(BaseCommand):
             site.save()
 
         self.stdout.write(
-            u'Site details set:\n   {0.name} / {0.domain}\n'.format(site))
+            u'Site details set:\n   %s / %s\n' % (site.name, site.domain))
