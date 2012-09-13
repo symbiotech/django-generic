@@ -20,5 +20,6 @@ class Command(BaseCommand):
             site.name = settings.SITE_NAME
             site.save()
 
-        self.stdout.write(
-            u'Site details set:\n   %s / %s\n' % (site.name, site.domain))
+        if options.get('verbosity', 1) >= 1:
+            self.stdout.write(
+                u'Site details set:\n   %s / %s\n' % (site.name, site.domain))
