@@ -54,7 +54,7 @@ class ProfileMiddleware(object):
             return self.prof.runcall(callback, request, *callback_args, **callback_kwargs)
 
     def get_group(self, file):
-        for g in group_prefix_re:
+        for g in ProfileMiddleware.group_prefix_re:
             name = g.findall( file )
             if name:
                 return name[0]
@@ -79,7 +79,7 @@ class ProfileMiddleware(object):
         sum = 0
 
         for s in stats_str:
-            fields = words_re.split(s);
+            fields = ProfileMiddleware.words_re.split(s);
             if len(fields) == 7:
                 time = float(fields[2])
                 sum += time
