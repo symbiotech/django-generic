@@ -3,10 +3,10 @@ import re
 from django import forms
 from django import template
 from django.core.urlresolvers import reverse
+from django.http import QueryDict
 from django.template import Node
 from django.template.defaultfilters import stringfilter, fix_ampersands
-from django.http import QueryDict
-
+from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe
 from urlparse import urlparse
 
@@ -36,10 +36,12 @@ def unbreakable(string):
     Replaces spaces with non-breaking spaces
     and hyphens with non-breaking hyphens.
     """
-    return mark_safe(string.strip().replace(' ', '&nbsp;').replace('-', '&#8209;'))
+    return mark_safe(
+        string.strip().replace(' ', '&nbsp;').replace('-', '&#8209;'))
 
 HTML_COMMENTS = re.compile(r'<!--.*?-->', re.DOTALL)
 @register.filter
+@stringfilter
 def unescape(text):
     """
     Renders plain versions of HTML text - useful for supplying HTML into
@@ -65,6 +67,15 @@ def unescape(text):
     return re.sub(
         '&(%s);' % '|'.join(ENTITIES),
         lambda match: ENTITIES[match.group(1)], text)
+
+
+LINE_BREAKS = re.compile(r'(<br\s*/*>)|(</p>)')
+VERTICAL_WHITESPACE = re.compile(r'\s*\n\s*', re.DOTALL)
+@register.filter
+@stringfilter
+def html_to_text(html):
+    html = LINE_BREAKS.sub('\n', html)
+    return VERTICAL_WHITESPACE.sub('\n\n', strip_tags(unescape(html))).strip()
 
 
 def _get_admin_url(obj, view='change', admin_site_name='admin'):
