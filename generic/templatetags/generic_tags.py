@@ -275,3 +275,60 @@ class UpdateGetNode(template.Node):
                         GET.setlist(actual_attr, li)
 
         return fix_ampersands(GET.urlencode())
+
+
+"""
+mark_current_links
+==================
+Detects and earmarks "current" links with the wrapped content.
+
+    {% mark_current_links "active" %}
+        <nav>
+           <a href="{% url home %}">Home</a>
+           <a href="{% url content:index %}">Content</a>
+           <a href="{% url about %}">About</a>
+        </nav>
+    {% endmark_current_links %}
+
+Argument is optional; defaults to "current". A css class with this name will
+be added to the link if the current request matches the href URL. URLs longer
+than a single character (i.e. "/") use startswith matching, so that
+/content/blah/ will match /content/.
+
+TODO:
+- Detect existing "class" attributes and append to that if found
+  (using a markup parsing library)
+- Some clever configuration to detect/support multiple links which share
+  a common prefix.
+
+"""
+@register.tag(name='mark_current_links')
+def do_mark_current_links(parser, token):
+    tokens = token.split_contents()
+    tag_name = tokens.pop(0)
+    css_class = 'current'
+    if len(tokens) == 1:
+        css_class = tokens[1]
+    elif len(tokens) > 1:
+        raise template.TemplateSyntaxError(
+            "'%s' node takes only a single optional argument" % tag_name)
+    nodelist = parser.parse(('endmark_current_links',))
+    parser.delete_first_token()
+    return MarkCurrentLinksNode(nodelist, css_class)
+
+class MarkCurrentLinksNode(template.Node):
+    def __init__(self, nodelist, css_class):
+        self.nodelist = nodelist
+        self.css_class = css_class
+
+    def render(self, context):
+        output = self.nodelist.render(context)
+        current_url = context['request'].path
+        def replace_attributes(match):
+            attributes = match.group()
+            url = match.groupdict()['url']
+            if (current_url == url or
+                len(url) > 1 and current_url.startswith(url)):
+                attributes += ' class="%s"' % self.css_class
+            return attributes
+        return re.sub(r'href="(?P<url>[^"]+)"', replace_attributes, output)
