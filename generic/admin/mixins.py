@@ -1,8 +1,17 @@
 from django import http
 from django.contrib import admin
-from django.conf.urls.defaults import patterns, url
+
+try:
+    # Prevent deprecation warnings on Django >= 1.4
+    from django.conf.urls import patterns, url
+except ImportError:
+    # For compatibility with Django <= 1.3
+    from django.conf.urls.defaults import patterns, url
+
 from django.shortcuts import get_object_or_404, redirect
+
 from .. import models
+
 
 class DelibleAdmin(admin.ModelAdmin):
     """ Admin with "undelete" functionality for Delible objects """
