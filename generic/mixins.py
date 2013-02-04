@@ -1,4 +1,4 @@
-
+from django.db import models
 
 class Inheritable(object):
     def get_leaf_object(self):
@@ -12,3 +12,13 @@ class Inheritable(object):
                     pass
         return self
 
+
+
+
+class HousekeepingMixin(models.Model):
+    """Abstract mixin class to collect creation and update timestamps."""
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True

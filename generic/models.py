@@ -54,6 +54,5 @@ class Relatable(models.Model, Inheritable):
     """
     NON-abstract model mixin that encapsulates a many-to-many field to itself.
     """
-    content_type = models.ForeignKey(ContentType, blank=True, null=True)
     related_items = models.ManyToManyField('Relatable', blank=True,
-                                           symmetrical=True, help_text="contents related to this")
+                       symmetrical=True, help_text="contents related to this")
