@@ -1,7 +1,9 @@
 import datetime
 
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from generic.mixins import Inheritable
 
 class DelibleManager(models.Manager):
     """
@@ -46,3 +48,12 @@ class Delible(models.Model):
         self.deleted = None
         self.deleted_by = None
         self.save()
+
+
+class Relatable(models.Model, Inheritable):
+    """
+    NON-abstract model mixin that encapsulates a many-to-many field to itself.
+    """
+    content_type = models.ForeignKey(ContentType, blank=True, null=True)
+    related_items = models.ManyToManyField('RelatableContent', blank=True,
+                                           symmetrical=True, help_text="contents related to this")
