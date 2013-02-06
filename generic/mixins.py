@@ -12,6 +12,18 @@ class Inheritable(object):
                     pass
         return self
 
+    def __unicode__(self):
+        # Display the unicode representation of the leaf model instance
+        leaf = self.get_leaf_object()
+        if leaf.__class__ != self.__class__:
+            return unicode(leaf)
+        # Simulate what Django does in Model.__str__, so that when no
+        # __unicode__ method is defined on the model, this mixin doesn't
+        # affect the unicode representation
+        if hasattr(super(Inheritable, self), '__unicode__'):
+            return super(Inheritable, self).__unicode__()
+        return '%s object' % self.__class__.__name__
+
 
 class HousekeepingMixin(models.Model):
     """Abstract mixin class to collect creation and update timestamps."""
