@@ -13,12 +13,12 @@ class Inheritable(object):
         return self
 
 
-
-
 class HousekeepingMixin(models.Model):
     """Abstract mixin class to collect creation and update timestamps."""
     date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
+
+    deleted = models.BooleanField(default=False)
 
     class Meta:
         abstract = True
