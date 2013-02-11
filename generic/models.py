@@ -1,9 +1,16 @@
 import datetime
 
-from django.contrib.auth.models import User
+try:
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+except:
+    from django.contrib.auth.models import User
+    
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from generic.mixins import Inheritable
+
+from .mixins import Inheritable
+
 
 class DelibleManager(models.Manager):
     """
