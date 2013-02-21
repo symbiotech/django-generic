@@ -5,6 +5,8 @@ from django.core.management.base import BaseCommand, CommandError
 class Command(BaseCommand):
     help = 'Set Site name and domain from settings.SITE_NAME/DOMAIN'
     def handle(self, *args, **options):
+        if not 'django.contrib.sites' in settings.INSTALLED_APPS:
+            raise CommandError('Not applicable if Sites is not installed')
         try:
             site = Site.objects.get(id=settings.SITE_ID)
         except Site.DoesNotExist:
