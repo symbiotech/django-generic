@@ -33,9 +33,9 @@
             <ul>
               {% if user.is_authenticated and user.is_staff %}
                 {% if user.is_staff %}
-                  <li><a href="{% url admin:index %}">Admin</a></li>
+                  <li><a href="{% url 'admin:index' %}">Admin</a></li>
                 {% endif %}
-                {#<li><a href="{% url logout %}">Log out</a></li>#}
+                {#<li><a href="{% url 'logout' %}">Log out</a></li>#}
               {% endif %}
             </ul>
           {% endblock %}

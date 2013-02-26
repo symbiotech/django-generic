@@ -284,9 +284,9 @@ Detects and earmarks "current" links with the wrapped content.
 
     {% mark_current_links "active" %}
         <nav>
-           <a href="{% url home %}">Home</a>
-           <a href="{% url content:index %}">Content</a>
-           <a href="{% url about %}">About</a>
+           <a href="{% url 'home' %}">Home</a>
+           <a href="{% url 'content:index' %}">Content</a>
+           <a href="{% url 'about' %}">About</a>
         </nav>
     {% endmark_current_links %}
 
