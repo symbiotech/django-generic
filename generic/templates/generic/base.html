@@ -1,4 +1,4 @@
-<!doctype html>
+{% load staticfiles %}<!doctype html>
 <html lang="en">
   <head>{% block head %}
     <meta charset="utf-8">
@@ -7,8 +7,8 @@
     <title>{% block title %}{% block page_title %}{% endblock %} | {{ SITE_NAME }}{% endblock %}</title>
 
     {% block style %}
-      <link href="{{ STATIC_URL }}generic/css/global.css" rel="stylesheet" />
-      <link href="{{ STATIC_URL }}generic/css/screen.css" media="screen" rel="stylesheet" />
+      <link href="{% static 'generic/css/global.css' %}" rel="stylesheet" />
+      <link href="{% static 'generic/css/screen.css' %}" media="screen" rel="stylesheet" />
     {% endblock %}
      <!--[if lt IE 9]>
         <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -49,7 +49,7 @@
         <script>
           if(!window.jQuery){
             document.write(
-              '<script src="{{ STATIC_URL }}generic/js/jquery-1.7.2.min.js"><\/script>'
+              '<script src="{% static 'generic/js/jquery-1.7.2.min.js' %}"><\/script>'
             );
           }
         </script>
