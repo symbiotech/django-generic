@@ -1,0 +1,21 @@
+ul.cooked-data{
+    display: inline;
+    margin-left: 0px !important;
+    padding-left: 0px !important;
+    margin-right: 0px;
+    padding-right: 0px;
+}
+
+ul.cooked-data li{
+    display: inline;
+    margin-right: 5px;
+    border: 1px solid #DDD;
+    background-color: #FAFAFA;
+    padding: 2px 2px 2px 5px;
+}
+
+ul.cooked-data li a{
+    cursor: pointer;
+    background: url(../img/icon_deletelink.gif) 0 50% no-repeat;
+    padding-right: 10px;
+}
