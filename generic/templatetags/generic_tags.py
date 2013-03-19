@@ -1,11 +1,12 @@
 import re
 
+from django import forms
 from django import template
 from django.core.urlresolvers import reverse
+from django.http import QueryDict
 from django.template import Node
 from django.template.defaultfilters import stringfilter, fix_ampersands
-from django.http import QueryDict
-
+from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe
 from urlparse import urlparse
 
@@ -16,8 +17,10 @@ def field(field, *args, **kwargs):
     return {
         'field': field,
         'show_label': kwargs.get('show_label', True),
+        'show_star': kwargs.get('show_star', True),
         'label_override': kwargs.get('label_override', None),
-        }
+        'checkbox': isinstance(field.field.widget, forms.CheckboxInput),
+    }
 
 @register.filter
 def linkify(obj):
@@ -33,10 +36,12 @@ def unbreakable(string):
     Replaces spaces with non-breaking spaces
     and hyphens with non-breaking hyphens.
     """
-    return mark_safe(string.strip().replace(' ', '&nbsp;').replace('-', '&#8209;'))
+    return mark_safe(
+        string.strip().replace(' ', '&nbsp;').replace('-', '&#8209;'))
 
 HTML_COMMENTS = re.compile(r'<!--.*?-->', re.DOTALL)
 @register.filter
+@stringfilter
 def unescape(text):
     """
     Renders plain versions of HTML text - useful for supplying HTML into
@@ -50,16 +55,27 @@ def unescape(text):
         '#39': "'",
         'nbsp': ' ',
         'ndash': '-',
+        'mdash': '--',
         'rsquo': "'",
         'rdquo': '"',
         'lsquo': "'",
         'ldquo': '"',
         'middot': '*',
+        'hellip': '...',
         }
     text = HTML_COMMENTS.sub('', text)
     return re.sub(
         '&(%s);' % '|'.join(ENTITIES),
         lambda match: ENTITIES[match.group(1)], text)
+
+
+LINE_BREAKS = re.compile(r'(<br\s*/*>)|(</p>)')
+VERTICAL_WHITESPACE = re.compile(r'\s*\n\s*', re.DOTALL)
+@register.filter
+@stringfilter
+def html_to_text(html):
+    html = LINE_BREAKS.sub('\n', html)
+    return VERTICAL_WHITESPACE.sub('\n\n', strip_tags(unescape(html))).strip()
 
 
 def _get_admin_url(obj, view='change', admin_site_name='admin'):
@@ -259,3 +275,60 @@ class UpdateGetNode(template.Node):
                         GET.setlist(actual_attr, li)
 
         return fix_ampersands(GET.urlencode())
+
+
+"""
+mark_current_links
+==================
+Detects and earmarks "current" links with the wrapped content.
+
+    {% mark_current_links "active" %}
+        <nav>
+           <a href="{% url 'home' %}">Home</a>
+           <a href="{% url 'content:index' %}">Content</a>
+           <a href="{% url 'about' %}">About</a>
+        </nav>
+    {% endmark_current_links %}
+
+Argument is optional; defaults to "current". A css class with this name will
+be added to the link if the current request matches the href URL. URLs longer
+than a single character (i.e. "/") use startswith matching, so that
+/content/blah/ will match /content/.
+
+TODO:
+- Detect existing "class" attributes and append to that if found
+  (using a markup parsing library)
+- Some clever configuration to detect/support multiple links which share
+  a common prefix.
+
+"""
+@register.tag(name='mark_current_links')
+def do_mark_current_links(parser, token):
+    tokens = token.split_contents()
+    tag_name = tokens.pop(0)
+    css_class = 'current'
+    if len(tokens) == 1:
+        css_class = tokens[1]
+    elif len(tokens) > 1:
+        raise template.TemplateSyntaxError(
+            "'%s' node takes only a single optional argument" % tag_name)
+    nodelist = parser.parse(('endmark_current_links',))
+    parser.delete_first_token()
+    return MarkCurrentLinksNode(nodelist, css_class)
+
+class MarkCurrentLinksNode(template.Node):
+    def __init__(self, nodelist, css_class):
+        self.nodelist = nodelist
+        self.css_class = css_class
+
+    def render(self, context):
+        output = self.nodelist.render(context)
+        current_url = context['request'].path
+        def replace_attributes(match):
+            attributes = match.group()
+            url = match.groupdict()['url']
+            if (current_url == url or
+                len(url) > 1 and current_url.startswith(url)):
+                attributes += ' class="%s"' % self.css_class
+            return attributes
+        return re.sub(r'href="(?P<url>[^"]+)"', replace_attributes, output)

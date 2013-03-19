@@ -6,6 +6,9 @@ class Command(BaseCommand):
     help = 'Shortcut for syncdb / migrate / collectstatic'
     def handle(self, *args, **options):
         call_command('syncdb')
-        call_command('migrate')
-        call_command('collectstatic')
-        call_command('set_site_name_and_domain')
+        if 'south' in settings.INSTALLED_APPS:
+            call_command('migrate')
+        if 'django.contrib.staticfiles' in settings.INSTALLED_APPS:
+            call_command('collectstatic')
+        if 'django.contrib.sites' in settings.INSTALLED_APPS:
+            call_command('set_site_name_and_domain')

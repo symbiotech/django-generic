@@ -1,5 +1,7 @@
 from functools import wraps
 from django.conf import settings
+from django.http import HttpResponse
+from django.utils import simplejson
 
 def cache_result_in_instance(method):
     """
@@ -26,3 +28,28 @@ def cache_result_in_instance(method):
                 cache[key] = method(self, *args)
             return cache[key]
     return wrapped_method
+
+
+def json_view(view):
+    """
+    Convenience decorator for views which return JSON data.
+
+    Allows a view to return data (e.g. a dict) and have it serialized into
+    an HTTPResponse with the appropriate mimetype.
+    """
+    @wraps(view)
+    def wrapped_view(request, *args, **kwargs):
+        response_data = view(request, *args, **kwargs)
+        if isinstance(response_data, HttpResponse):
+            if settings.DEBUG:
+                raise RuntimeError(
+                    'json_view-wrapped method is returning an HttpResponse!')
+            else:
+                return response_data
+        try:
+            json = simplejson.dumps(response_data)
+        except TypeError:
+            json = simplejson.dumps(
+                {'result': False, 'reason': 'Error encoding JSON response'})
+        return HttpResponse(json, mimetype='application/json')
+    return wrapped_view
