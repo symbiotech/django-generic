@@ -82,11 +82,47 @@ class BetterTestCase(TestCase):
             try:
                 if 'status_code' in attributes:
                     self.assertEqual(
-                        response.status_code, attributes['status_code'])
+                        response.status_code, attributes.pop('status_code'))
                 if 'template' in attributes:
-                    self.assertTemplateUsed(response, attributes['template'])
+                    self.assertTemplateUsed(
+                        response, attributes.pop('template'))
+                if 'contains' in attributes:
+                    self.assertContains(response, attributes.pop('contains'))
+                if '~contains' in attributes:
+                    self.assertNotContains(
+                        response, attributes.pop('~contains'))
+                if 'icontains' in attributes:
+                    self.assertContains(
+                        response,
+                        attributes.pop('icontains'),
+                        case_sensitive=False
+                    )
+                if '~icontains' in attributes:
+                    self.assertNotContains(
+                        response,
+                        attributes.pop('~icontains'),
+                        case_sensitive=False
+                    )
+                if 'context' in attributes:
+                    for key, value in attributes.pop('context').iteritems():
+                        if callable(value):
+                            self.assertTrue(value(response.context[key]))
+                        else:
+                            self.assertEqual(response.context[key], value)
+                if 'redirects' in attributes:
+                    self.assertRedirects(response, attributes.pop('redirects'))
+                if 'redirects_permanently' in attributes:
+                    self.assertRedirects(
+                        response,
+                        attributes.pop('redirects_permanently'),
+                        status_code=301,
+                    )
+
+                # that's all folks...
+                self.assertFalse(
+                    attributes, 'Untested attributes: %r' % attributes)
             except AssertionError:
-                print 'While testing URL: %s' % url
+                logger.warning('AssertionError while testing URL: %s' % url)
                 raise
 
     def _test_admin(self, MODELS):
