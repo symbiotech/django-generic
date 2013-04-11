@@ -3,7 +3,13 @@ from __future__ import absolute_import
 import hashlib
 import logging
 
-from django.contrib.auth import get_user_model
+try:
+    from django.contrib.auth import get_user_model
+except ImportError:
+    # Django < 1.5
+    from django.contrib.auth.models import User
+else:
+    User = get_user_model()
 from django.core.urlresolvers import reverse
 from django.db import DEFAULT_DB_ALIAS, connections
 from django.test import TestCase
@@ -57,8 +63,8 @@ class BetterTestCase(TestCase):
             'password': password or get_hash(email+'PASSWORD'),
         }
         method = (
-            get_user_model()._default_manager.create_superuser if super else
-            get_user_model()._default_manager.create_user
+            User._default_manager.create_superuser if super else
+            User._default_manager.create_user
         )
         self.PASSWORDS[username] = params['password']
         return method(**params)
