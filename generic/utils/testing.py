@@ -12,7 +12,7 @@ else:
     User = get_user_model()
 from django.core.urlresolvers import reverse
 from django.db import DEFAULT_DB_ALIAS, connections
-from django.test import TestCase
+import django.test
 from django.test.testcases import _AssertNumQueriesContext
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ def reloaded(obj):
     return obj.__class__._default_manager.get(pk=obj.pk)
 
 
-class BetterTestCase(TestCase):
+class TestCase(django.test.TestCase):
     """ TestCase with moderate superpowers """
 
     PASSWORDS = {}
@@ -48,11 +48,11 @@ class BetterTestCase(TestCase):
 
     def assertContains(self, *args, **kwargs):
         return self._assertContains(
-            super(BetterTestCase, self).assertContains, *args, **kwargs)
+            super(TestCase, self).assertContains, *args, **kwargs)
 
     def assertNotContains(self, *args, **kwargs):
         return self._assertContains(
-            super(BetterTestCase, self).assertNotContains, *args, **kwargs)
+            super(TestCase, self).assertNotContains, *args, **kwargs)
 
     def create_user(self, username, email=None, password=None, super=False):
         """ Shortcut for creating users """
