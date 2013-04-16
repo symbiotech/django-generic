@@ -54,20 +54,15 @@ class TestCase(django.test.TestCase):
         return self._assertContains(
             super(TestCase, self).assertNotContains, *args, **kwargs)
 
-    def create_user(self, username, email=None, password=None, super=False):
+    def create_user(self, identifier, password=None, super=False):
         """ Shortcut for creating users """
-        email = email or (u'%s@example.com' % get_hash(username))
-        params = {
-            'username': username,
-            'email': email,
-            'password': password or get_hash(email+'PASSWORD'),
-        }
+        password = password or get_hash(identifier+'PASSWORD')
         method = (
             User._default_manager.create_superuser if super else
             User._default_manager.create_user
         )
-        self.PASSWORDS[username] = params['password']
-        return method(**params)
+        self.PASSWORDS[identifier] = password
+        return method(identifier, password=password)
 
     def login(self, username):
         """ Shortcut for logging in which asserts success """
