@@ -96,6 +96,27 @@ class CookedIdAdmin(admin.ModelAdmin):
             db_field, request=request, **kwargs)
 
 
+class ReturnURLAdminMixin(admin.ModelAdmin):
+    def response_add(self, request, obj, post_url_continue=None):
+        referrer = request.GET.get('_return_url')
+        if referrer and not '_continue' in request.POST:
+            return http.HttpResponseRedirect(referrer)
+        else:
+            return super(ReturnURLAdminMixin, self).response_add(
+                request, obj, post_url_continue=post_url_continue)
+
+    def response_change(self, request, obj):
+        referrer = request.GET.get('_return_url')
+        if (referrer and
+            not '_continue' in request.REQUEST and
+            not '_popup' in request.REQUEST
+        ):
+            return http.HttpResponseRedirect(referrer)
+        else:
+            return super(ReturnURLAdminMixin, self).response_change(
+                request, obj)
+
+
 class DelibleAdmin(admin.ModelAdmin):
     """ Admin with "undelete" functionality for Delible objects """
     change_form_template = 'admin/delible_change_form.html'

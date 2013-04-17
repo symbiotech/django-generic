@@ -2,9 +2,13 @@ import re
 
 from django import forms
 from django import template
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
+from django.db.models import get_model
 from django.http import QueryDict
 from django.template import Node
+from django.template import TemplateSyntaxError
 from django.template.defaultfilters import stringfilter, fix_ampersands
 from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe
@@ -332,3 +336,101 @@ class MarkCurrentLinksNode(template.Node):
                 attributes += ' class="%s"' % self.css_class
             return attributes
         return re.sub(r'href="(?P<url>[^"]+)"', replace_attributes, output)
+
+
+def _admin_link(tag_name, link_type, context, **kwargs):
+    try:
+        request = context['request']
+    except KeyError:
+        if settings.DEBUG:
+            raise ImproperlyConfigured(
+                '{%% %s %%} requires the request to be accessible '
+                'within the template context; perhaps install '
+                'django.core.context_processors.request?' % tag_name
+            )
+        else:
+            return ''
+
+    if (
+        not hasattr(request, 'user') or
+        not request.user.is_authenticated() or
+        not request.user.is_staff
+    ):
+        return ''
+
+    model = kwargs.get('model')
+
+    # TODO: consider trying to lookup AdminSite._registry and checking
+    # permissions on ModelAdmin itself -- but how to find the non-standard
+    # admin site objects? Registered via admin?
+    if not request.user.has_perm(
+        '%s.%s_%s' % (
+            link_type,
+            model._meta.app_label,
+            model._meta.module_name,
+        )
+    ):
+        return ''
+
+    admin_namespace = kwargs.pop('admin_namespace', 'admin')
+    # TODO: i18n
+    link_text = kwargs.pop('link_text').replace(
+        '<verbose_name>',
+        unicode(model._meta.verbose_name)
+    )
+
+    querystring_dict = QueryDict('', mutable=True)
+    querystring_dict['_return_url'] = request.path
+
+    for key in kwargs:
+        QUERYSTRING_PREFIX = 'querystring_'
+        if key.startswith(QUERYSTRING_PREFIX):
+            querystring_dict[key[len(QUERYSTRING_PREFIX):]] = kwargs.get(key)
+    querystring = querystring_dict.urlencode()
+
+    return '<a href="%s%s" class="admin-link">%s</a>' % (
+        reverse(
+            '%s:%s_%s_%s' % (
+                admin_namespace,
+                model._meta.app_label,
+                model._meta.module_name,
+                link_type,
+            ),
+            args=kwargs.pop('reverse_args', ()),
+            kwargs=kwargs.pop('reverse_kwargs', {}),
+        ),
+        ('?%s' % querystring) if querystring else '',
+        link_text,
+    )
+
+
+@register.simple_tag(takes_context=True)
+def add_link(context, model_string, **kwargs):
+    model = get_model(*model_string.split('.'))
+    if model is None:
+        if settings.DEBUG:
+            raise ImproperlyConfigured(
+                '{%% add_link "%s" %%} -- model cannot be found' % (
+                    model_string,
+                )
+            )
+        else:
+            return ''
+
+    defaults = {
+        'link_text': 'Add <verbose_name>',
+        'model': model,
+    }
+    defaults.update(**kwargs)
+    return _admin_link('add_link', 'add', context, **defaults)
+
+
+@register.simple_tag(takes_context=True)
+def change_link(context, obj, **kwargs):
+    defaults = {
+        'link_text': 'Edit this <verbose_name>',
+        'model': obj.__class__,
+        'reverse_args': (obj.pk,),
+    }
+    defaults.update(**kwargs)
+    return _admin_link('change_link', 'change', context, **defaults)
