@@ -27,8 +27,11 @@ class EmailMessage(mail.EmailMessage):
 
         if self.template_name and not self.body:
             if self.use_context_processors:
-                self.context = RequestContext(self.request).update(self.context)
-            self.body = render_to_string(self.template_name, self.context)
+                context = RequestContext(self.request)
+                context.update(self.context)
+            else:
+                context = self.context
+            self.body = render_to_string(self.template_name, context)
 
     def send(self, fail_silently=False):
         if self.send_separately:
