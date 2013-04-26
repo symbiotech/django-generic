@@ -1,8 +1,11 @@
+from django import forms
 from django import http
 from django.conf import settings
 from django.contrib import admin
 from django.conf.urls import patterns, url
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.urlresolvers import reverse
+from django.template.response import TemplateResponse
 from django.shortcuts import get_object_or_404, redirect
 
 try:
@@ -115,6 +118,130 @@ class ReturnURLAdminMixin(admin.ModelAdmin):
         else:
             return super(ReturnURLAdminMixin, self).response_change(
                 request, obj)
+
+
+class BatchUpdateAdmin(admin.ModelAdmin):
+    batch_update_fields = ()
+
+    def _get_url_name(self, view_name, include_namespace=True):
+        return '%s%s_%s_%s' % (
+            'admin:' if include_namespace else '',
+            self.model._meta.app_label,
+            self.model._meta.module_name,
+            view_name,
+        )
+
+    def batch_update(self, request, queryset):
+        selected = request.POST.getlist(admin.ACTION_CHECKBOX_NAME)
+        return http.HttpResponseRedirect(
+            '%s?ids=%s' % (
+                reverse(
+                    self._get_url_name('batchupdate'),
+                    current_app=self.admin_site.name,
+                ),
+                ','.join(selected),
+            )
+        )
+
+    def get_batch_update_form_class(self, request):
+        from django.forms.forms import BoundField
+        from django.forms.models import modelform_factory
+        base = modelform_factory(self.model, fields=self.batch_update_fields)
+        class BatchUpdateForm(base):
+            def __init__(self, *args, **kwargs):
+                super(BatchUpdateForm, self).__init__(*args, **kwargs)
+                for field_name in self.fields.keys():
+                    self.fields[field_name].update_checkbox = BoundField(
+                        self,
+                        forms.BooleanField(required=False),
+                        'updating-'+field_name
+                    )
+
+            def clean(self):
+                self.fields_to_update = []
+                for field_name, field in self.fields.iteritems():
+                    if field.update_checkbox.value():
+                        self.fields_to_update.append(field_name)
+                if not self.fields_to_update:
+                    raise ValidationError(
+                        ["You haven't selected any fields to update"])
+                return self.cleaned_data
+
+            def apply(self, request, model_admin, ids):
+                model = self._meta.model
+                queryset = model_admin.queryset(request).filter(pk__in=ids)
+                updated = queryset.update(
+                    **dict(
+                        [
+                            (key, self.cleaned_data[key])
+                            for key in self.fields_to_update
+                        ]
+                    )
+                )
+                model_admin.message_user(
+                    request, 'Updated fields (%s) for %d %s' % (
+                        ', '.join(self.fields_to_update),
+                        updated,
+                        unicode(
+                            model._meta.verbose_name if len(ids) == 1 else
+                            model._meta.verbose_name_plural
+                        ),
+                    )
+                )
+                return model_admin.response_post_save_change(request, None)
+
+        return BatchUpdateForm
+
+    def batch_update_view(self, request):
+        template_paths = map(
+            lambda path: path % {
+                'app_label': self.model._meta.app_label,
+                'module_name': self.model._meta.module_name,
+            }, (
+                'admin/%(app_label)s/%(module_name)s/batch_update.html',
+                'admin/%(app_label)s/batch_update.html',
+                'admin/batch_update.html',
+                'admin/generic/batch_update.html',
+            )
+        )
+        ids = request.REQUEST.get('ids', '').split(',')
+        form_class = self.get_batch_update_form_class(request)
+        form = form_class(request.POST or None)
+        if form.is_valid():
+            response = form.apply(request, self, ids)
+            if response:
+                return response
+
+        return TemplateResponse(
+            request,
+            template_paths, {
+                'form': form,
+                'model_meta': self.model._meta,
+                'has_change_permission': self.has_change_permission(request),
+                'count': len(ids),
+            },
+            current_app=self.admin_site.name,
+        )
+
+    def get_urls(self):
+        return patterns(
+            '',
+            url(r'^batch-update/$',
+                self.admin_site.admin_view(self.batch_update_view),
+                name=self._get_url_name(
+                    'batchupdate', include_namespace=False),
+            ),
+        ) + super(BatchUpdateAdmin, self).get_urls()
+
+    def get_actions(self, request):
+        actions = super(BatchUpdateAdmin, self).get_actions(request)
+        if self.batch_update_fields:
+            if not 'batch_update' in actions:
+                actions['batch_update'] = self.get_action('batch_update')
+        else:
+            if 'batch_update' in actions:
+                del actions['batch_update']
+        return actions
 
 
 class DelibleAdmin(admin.ModelAdmin):

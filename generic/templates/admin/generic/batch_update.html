@@ -1,0 +1,47 @@
+{% extends "admin/base_site.html" %}
+{% load admin_urls i18n %}
+{# TODO: i18n #}
+
+{% block breadcrumbs %}
+  <div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label=model_meta.app_label %}">{{ model_meta.app_label|capfirst|escape }}</a>
+    &rsaquo; {% if has_change_permission %}<a href="{% url model_meta|admin_urlname:'changelist' %}">{{ model_meta.verbose_name_plural|capfirst }}</a>{% else %}{{ model_meta.verbose_name_plural|capfirst }}{% endif %}
+    &rsaquo; {% trans 'Batch Update' %}
+  </div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+  <h2>Batch Update</h2>
+  <form method="POST">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <table>
+      <thead>
+        <th>Field</th>
+        <th>Update</th>
+        <th>New Value</th>
+      </thead>
+      <tbody>
+        {% for field in form %}
+          <tr>
+            <th>{{ field.label_tag }}</th>
+            <td>
+              {{ field.field.update_checkbox }}
+            </td>
+            <td>{{ field.errors }} {{ field }}</td>
+          </tr>
+        {% endfor %}
+        <tr>
+          <td></td>
+          <td></td>
+          <td>
+            <input type="submit" value="{% blocktrans count count=count with verbose_name=model_meta.verbose_name verbose_name_plural=model_meta.verbose_name_plural %}Update this {{ verbose_name }}{% plural %}Update all {{ count }} {{ verbose_name_plural }}{% endblocktrans %}" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </form>
+</div>
+{% endblock %}
