@@ -2,6 +2,7 @@ from django import forms
 from django import http
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.admin import helpers
 from django.conf.urls import patterns, url
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.urlresolvers import reverse
@@ -240,7 +241,12 @@ class BatchUpdateAdmin(admin.ModelAdmin):
                 'model_meta': self.model._meta,
                 'has_change_permission': self.has_change_permission(request),
                 'count': len(queryset),
-                'media': self.media,
+                'media': self.media + helpers.AdminForm(
+                    form, list(self.get_fieldsets(request)),
+                    self.get_prepopulated_fields(request),
+                    self.get_readonly_fields(request),
+                    model_admin=self
+                ).media,
             },
             current_app=self.admin_site.name,
         )
