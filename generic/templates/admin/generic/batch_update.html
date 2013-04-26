@@ -1,6 +1,5 @@
 {% extends "admin/base_site.html" %}
 {% load admin_urls i18n %}
-{# TODO: i18n #}
 
 {% block extrahead %}{{ block.super }}
 <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
@@ -17,36 +16,36 @@
 {% endblock %}
 
 {% block content %}
-<div class="module">
-  <h2>Batch Update</h2>
-  <form method="POST">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
-    <table>
-      <thead>
-        <th>Field</th>
-        <th>Update</th>
-        <th>New Value</th>
-      </thead>
-      <tbody>
-        {% for field in form %}
+  <h1>{% blocktrans count count=count with verbose_name=model_meta.verbose_name verbose_name_plural=model_meta.verbose_name_plural %}Update {{ count }} {{ verbose_name }}{% plural %}Batch update of {{ count }} {{ verbose_name_plural }}{% endblocktrans %}</h1>
+  <div class="module">
+    <form method="POST">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <table>
+        <thead>
+          <th>{% trans "Field" %}</th>
+          <th>{% trans "Update" %}</th>
+          <th>{% trans "New Value" %}</th>
+        </thead>
+        <tbody>
+          {% for field in form %}
+            <tr>
+              <th>{{ field.label_tag }}</th>
+              <td>
+                {{ field.field.update_checkbox }}
+              </td>
+              <td>{{ field.errors }} {{ field }}</td>
+            </tr>
+          {% endfor %}
           <tr>
-            <th>{{ field.label_tag }}</th>
+            <td></td>
+            <td></td>
             <td>
-              {{ field.field.update_checkbox }}
+              <input type="submit" value="{% blocktrans count count=count with verbose_name=model_meta.verbose_name verbose_name_plural=model_meta.verbose_name_plural %}Update this {{ verbose_name }}{% plural %}Update all {{ count }} {{ verbose_name_plural }}{% endblocktrans %}" />
             </td>
-            <td>{{ field.errors }} {{ field }}</td>
           </tr>
-        {% endfor %}
-        <tr>
-          <td></td>
-          <td></td>
-          <td>
-            <input type="submit" value="{% blocktrans count count=count with verbose_name=model_meta.verbose_name verbose_name_plural=model_meta.verbose_name_plural %}Update this {{ verbose_name }}{% plural %}Update all {{ count }} {{ verbose_name_plural }}{% endblocktrans %}" />
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </form>
-</div>
+        </tbody>
+      </table>
+    </form>
+  </div>
 {% endblock %}

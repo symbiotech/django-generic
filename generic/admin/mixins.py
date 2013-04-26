@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.template.response import TemplateResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.utils.translation import ungettext_lazy, ugettext_lazy as _
 
 try:
     import json
@@ -139,7 +140,7 @@ class BatchUpdateForm(forms.ModelForm):
                 self.fields_to_update.append(field_name)
         if not self.fields_to_update:
             raise ValidationError(
-                ["You haven't selected any fields to update"])
+                [_("You haven't selected any fields to update")])
         return cleaned_data
 
     def apply(self, request, queryset):
@@ -205,26 +206,30 @@ class BatchUpdateAdmin(admin.ModelAdmin):
             )
         )
         ids = request.REQUEST.get('ids', '').split(',')
+        queryset = self.queryset(request).filter(pk__in=ids)
         form_class = self.get_batch_update_form_class(request)
         form = form_class(request.POST or None)
         if form.is_valid():
-            queryset = self.queryset(request).filter(pk__in=ids)
             updated = form.apply(request, queryset)
             self.message_user(
                 request,
-                u'Updated fields (%s) for %d %s' % (
-                    u', '.join(
+                ungettext_lazy(
+                    u'Updated fields (%(field_list)s) '
+                    u'for %(count)d %(verbose_name)s',
+                    u'Updated fields (%(field_list)s) '
+                    u'for %(count)d %(verbose_name_plural)s',
+                    updated,
+                ) % {
+                    'field_list': u', '.join(
                         [
                             self.model._meta.get_field(name).verbose_name
                             for name in form.fields_to_update
                         ]
                     ),
-                    updated,
-                    unicode(
-                        self.model._meta.verbose_name if len(ids) == 1 else
-                        self.model._meta.verbose_name_plural
-                    ),
-                )
+                    'count': updated,
+                    'verbose_name': self.model._meta.verbose_name,
+                    'verbose_name_plural': self.model._meta.verbose_name_plural
+                }
             )
             return self.response_post_save_change(request, None)
 
@@ -234,7 +239,7 @@ class BatchUpdateAdmin(admin.ModelAdmin):
                 'form': form,
                 'model_meta': self.model._meta,
                 'has_change_permission': self.has_change_permission(request),
-                'count': len(ids),
+                'count': len(queryset),
                 'media': self.media,
             },
             current_app=self.admin_site.name,
