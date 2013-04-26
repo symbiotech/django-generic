@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.conf.urls import patterns, url
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.urlresolvers import reverse
+from django.db import models
 from django.template.response import TemplateResponse
 from django.shortcuts import get_object_or_404, redirect
 
@@ -13,7 +14,6 @@ try:
 except ImportError:
     from django.utils import simplejson as json
 
-from .. import models
 from .widgets import ForeignKeyCookedIdWidget, ManyToManyCookedIdWidget
 
 class CookedIdAdmin(admin.ModelAdmin):
@@ -143,14 +143,21 @@ class BatchUpdateForm(forms.ModelForm):
         return cleaned_data
 
     def apply(self, request, queryset):
-        updated = queryset.update(
-            **dict(
-                [
-                    (key, self.cleaned_data[key])
-                    for key in self.fields_to_update
-                ]
-            )
-        )
+        update_params = {}
+        updated = 0
+        for field_name in self.fields_to_update:
+            field = queryset.model._meta.get_field(field_name)
+            if isinstance(field, models.ManyToManyField):
+                for obj in queryset.all():
+                    getattr(obj, field_name).clear()
+                    # TODO: consider removing only those no longer present
+                    for related_obj in self.cleaned_data[field_name]:
+                        getattr(obj, field_name).add(related_obj)
+                    updated += 1
+            else:
+                update_params[field_name] = self.cleaned_data[field_name]
+        if update_params:
+            updated = queryset.update(**update_params)
         return updated
 
 
@@ -223,6 +230,7 @@ class BatchUpdateAdmin(admin.ModelAdmin):
                 'model_meta': self.model._meta,
                 'has_change_permission': self.has_change_permission(request),
                 'count': len(ids),
+                'media': self.media,
             },
             current_app=self.admin_site.name,
         )
@@ -249,21 +257,17 @@ class BatchUpdateAdmin(admin.ModelAdmin):
         return actions
 
     def _validate_batch_update_fields(self):
-        from django.db import models
         for field in self.batch_update_fields:
             field = self.model._meta.get_field(field)
-            if isinstance(field, models.ManyToManyField):
-                raise ImproperlyConfigured(
-                    'BatchUpdateAdmin does not yet support ManyToManyFields '
-                    ' -- coming soon.'
-                )
 
+
+from ..models.delible import Delible
 class DelibleAdmin(admin.ModelAdmin):
     """ Admin with "undelete" functionality for Delible objects """
     change_form_template = 'admin/delible_change_form.html'
 
     def delete_model(self, request, obj):
-        if isinstance(obj, models.Delible):
+        if isinstance(obj, Delible):
             obj.delete(request=request)
         else:
             obj.delete()
@@ -287,7 +291,7 @@ class DelibleAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         urls = super(DelibleAdmin, self).get_urls()
-        if issubclass(self.model, models.Delible):
+        if issubclass(self.model, Delible):
             urls = patterns(
                 '', url(
                     r'^(?P<pk>.+)/undelete/$',
