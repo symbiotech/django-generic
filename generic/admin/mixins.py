@@ -236,6 +236,7 @@ class BatchUpdateAdmin(admin.ModelAdmin):
     def get_actions(self, request):
         actions = super(BatchUpdateAdmin, self).get_actions(request)
         if self.batch_update_fields:
+            self._validate_batch_update_fields()
             if not 'batch_update' in actions:
                 actions['batch_update'] = self.get_action('batch_update')
         else:
@@ -243,6 +244,15 @@ class BatchUpdateAdmin(admin.ModelAdmin):
                 del actions['batch_update']
         return actions
 
+    def _validate_batch_update_fields(self):
+        from django.db import models
+        for field in self.batch_update_fields:
+            field = self.model._meta.get_field(field)
+            if isinstance(field, models.ManyToManyField):
+                raise ImproperlyConfigured(
+                    'BatchUpdateAdmin does not yet support ManyToManyFields '
+                    ' -- coming soon.'
+                )
 
 class DelibleAdmin(admin.ModelAdmin):
     """ Admin with "undelete" functionality for Delible objects """
