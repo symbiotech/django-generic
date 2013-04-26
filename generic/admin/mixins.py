@@ -213,7 +213,12 @@ class BatchUpdateAdmin(admin.ModelAdmin):
             self.message_user(
                 request,
                 u'Updated fields (%s) for %d %s' % (
-                    ', '.join(form.fields_to_update),
+                    u', '.join(
+                        [
+                            self.model._meta.get_field(name).verbose_name
+                            for name in form.fields_to_update
+                        ]
+                    ),
                     updated,
                     unicode(
                         self.model._meta.verbose_name if len(ids) == 1 else
