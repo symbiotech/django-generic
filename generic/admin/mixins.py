@@ -120,6 +120,40 @@ class ReturnURLAdminMixin(admin.ModelAdmin):
                 request, obj)
 
 
+class BatchUpdateForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        from django.forms.forms import BoundField
+        super(BatchUpdateForm, self).__init__(*args, **kwargs)
+        for field_name in self.fields.keys():
+            self.fields[field_name].update_checkbox = BoundField(
+                self,
+                forms.BooleanField(required=False),
+                'updating-'+field_name
+            )
+
+    def clean(self):
+        cleaned_data = super(BatchUpdateForm, self).clean()
+        self.fields_to_update = []
+        for field_name, field in self.fields.iteritems():
+            if field.update_checkbox.value():
+                self.fields_to_update.append(field_name)
+        if not self.fields_to_update:
+            raise ValidationError(
+                ["You haven't selected any fields to update"])
+        return cleaned_data
+
+    def apply(self, request, queryset):
+        updated = queryset.update(
+            **dict(
+                [
+                    (key, self.cleaned_data[key])
+                    for key in self.fields_to_update
+                ]
+            )
+        )
+        return updated
+
+
 class BatchUpdateAdmin(admin.ModelAdmin):
     batch_update_fields = ()
 
@@ -144,53 +178,12 @@ class BatchUpdateAdmin(admin.ModelAdmin):
         )
 
     def get_batch_update_form_class(self, request):
-        from django.forms.forms import BoundField
-        from django.forms.models import modelform_factory
-        base = modelform_factory(self.model, fields=self.batch_update_fields)
-        class BatchUpdateForm(base):
-            def __init__(self, *args, **kwargs):
-                super(BatchUpdateForm, self).__init__(*args, **kwargs)
-                for field_name in self.fields.keys():
-                    self.fields[field_name].update_checkbox = BoundField(
-                        self,
-                        forms.BooleanField(required=False),
-                        'updating-'+field_name
-                    )
-
-            def clean(self):
-                self.fields_to_update = []
-                for field_name, field in self.fields.iteritems():
-                    if field.update_checkbox.value():
-                        self.fields_to_update.append(field_name)
-                if not self.fields_to_update:
-                    raise ValidationError(
-                        ["You haven't selected any fields to update"])
-                return self.cleaned_data
-
-            def apply(self, request, model_admin, ids):
-                model = self._meta.model
-                queryset = model_admin.queryset(request).filter(pk__in=ids)
-                updated = queryset.update(
-                    **dict(
-                        [
-                            (key, self.cleaned_data[key])
-                            for key in self.fields_to_update
-                        ]
-                    )
-                )
-                model_admin.message_user(
-                    request, 'Updated fields (%s) for %d %s' % (
-                        ', '.join(self.fields_to_update),
-                        updated,
-                        unicode(
-                            model._meta.verbose_name if len(ids) == 1 else
-                            model._meta.verbose_name_plural
-                        ),
-                    )
-                )
-                return model_admin.response_post_save_change(request, None)
-
-        return BatchUpdateForm
+        return self.get_form(
+            request,
+            obj=None,
+            form=BatchUpdateForm,
+            fields=self.batch_update_fields,
+        )
 
     def batch_update_view(self, request):
         template_paths = map(
@@ -208,9 +201,20 @@ class BatchUpdateAdmin(admin.ModelAdmin):
         form_class = self.get_batch_update_form_class(request)
         form = form_class(request.POST or None)
         if form.is_valid():
-            response = form.apply(request, self, ids)
-            if response:
-                return response
+            queryset = self.queryset(request).filter(pk__in=ids)
+            updated = form.apply(request, queryset)
+            self.message_user(
+                request,
+                u'Updated fields (%s) for %d %s' % (
+                    ', '.join(form.fields_to_update),
+                    updated,
+                    unicode(
+                        self.model._meta.verbose_name if len(ids) == 1 else
+                        self.model._meta.verbose_name_plural
+                    ),
+                )
+            )
+            return self.response_post_save_change(request, None)
 
         return TemplateResponse(
             request,
