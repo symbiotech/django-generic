@@ -192,3 +192,71 @@ class _VerboseAssertNumQueriesContext(_AssertNumQueriesContext):
                 )
             )
             raise
+
+
+#---[ Selenium ]---------------------------------------------------------------
+
+from django.core import mail
+from django.test import LiveServerTestCase
+from selenium.webdriver.firefox.webdriver import WebDriver
+
+class SeleniumTests(LiveServerTestCase):
+    save_post_test_screenshots = True
+
+    @classmethod
+    def setUpClass(cls):
+        cls.driver = WebDriver()
+        super(SeleniumTests, cls).setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.driver.quit()
+        super(SeleniumTests, cls).tearDownClass()
+
+    def tearDown(self):
+        if self.save_post_test_screenshots:
+            self.driver.save_screenshot(
+                '/tmp/{0}_{1}.png'.format(
+                    self.__class__.__name__,
+                    self._testMethodName
+                )
+            )
+        if mail.outbox and 'Internal Server Error' in mail.outbox[-1].subject:
+            print mail.outbox[-1].body
+        super(SeleniumTests, self).tearDown()
+
+    def get(self, url, *args, **kwargs):
+        return self.driver.get(''.join([self.live_server_url, url]))
+
+    def assertContainsText(
+            self, needle, container_tag='body', case_sensitive=False):
+        haystack = self.driver.find_element_by_tag_name(container_tag).text
+        if not case_sensitive:
+            haystack = haystack.lower()
+            needle = needle.lower()
+        self.assertTrue(needle in haystack)
+
+    def assertContains(self, needle, case_sensitive=False):
+        haystack = self.driver.page_source
+        if not case_sensitive:
+            haystack = haystack.lower()
+            needle = needle.lower()
+        self.assertTrue(needle in haystack)
+
+    def fill_field(self, field_name, value):
+        first_name_input = self.driver.find_element_by_name(field_name)
+        first_name_input.send_keys(value)
+
+    def fill_fields(self, data):
+        for field_name, value in data.iteritems():
+            self.fill_field(field_name, value)
+
+    def submit_form(self):
+        self.driver.find_element_by_tag_name('form').submit()
+
+    def get_url(self):
+        return self.driver.current_url.replace(self.live_server_url, '', 1)
+
+    def print_text(self, container_tag='body'):
+        print self.driver.find_element_by_tag_name(container_tag).text
+
