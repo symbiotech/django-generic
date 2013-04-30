@@ -198,13 +198,13 @@ class _VerboseAssertNumQueriesContext(_AssertNumQueriesContext):
 
 from django.core import mail
 from django.test import LiveServerTestCase
-from selenium.webdriver.firefox.webdriver import WebDriver
 
 class SeleniumTests(LiveServerTestCase):
     save_post_test_screenshots = True
 
     @classmethod
     def setUpClass(cls):
+        from selenium.webdriver.firefox.webdriver import WebDriver
         cls.driver = WebDriver()
         super(SeleniumTests, cls).setUpClass()
 
