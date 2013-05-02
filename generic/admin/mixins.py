@@ -52,7 +52,10 @@ class CookedIdAdmin(admin.ModelAdmin):
         target_model_admin = self.admin_site._registry.get(
             self.model._meta.get_field(field_name).rel.to)
         response_data = {}
-        if target_model_admin:
+        if (
+                target_model_admin and
+                target_model_admin.has_change_permission(request)
+        ):
             for obj in target_model_admin.queryset(request).filter(id__in=ids):
                 response_data[obj.pk] = self.cook(
                     obj, request=request, field_name=field_name)

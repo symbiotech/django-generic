@@ -10,7 +10,9 @@
                 );
                 var field_name = $(field).attr('name');
                 var ids = escape($(field).val());
-                var cook_url = '../cook-ids/' + field_name + '/' + ids + '/';
+                var url_base = window.cooked_id_url_base || '../';
+                var cook_url =
+                    url_base + 'cook-ids/' + field_name + '/' + ids + '/';
                 $.get(cook_url, function(data){
                     var cooked = $('.cooked-data', container);
                     cooked.html('');
