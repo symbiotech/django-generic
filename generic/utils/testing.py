@@ -12,6 +12,7 @@ else:
     User = get_user_model()
 from django.core.urlresolvers import reverse
 from django.db import DEFAULT_DB_ALIAS, connections
+from django.shortcuts import resolve_url
 import django.test
 from django.test.testcases import _AssertNumQueriesContext
 
@@ -26,8 +27,33 @@ def reloaded(obj):
     return obj.__class__._default_manager.get(pk=obj.pk)
 
 
+class Client(django.test.Client):
+    def get(self, path, *args, **kwargs):
+        return super(Client, self).get(resolve_url(path), *args, **kwargs)
+
+    def post(self, path, *args, **kwargs):
+        return super(Client, self).post(resolve_url(path), *args, **kwargs)
+
+    def head(self, path, *args, **kwargs):
+        return super(Client, self).head(resolve_url(path), *args, **kwargs)
+
+    def options(self, path, *args, **kwargs):
+        return super(Client, self).options(resolve_url(path), *args, **kwargs)
+
+    def put(self, path, *args, **kwargs):
+        return super(Client, self).put(resolve_url(path), *args, **kwargs)
+
+    def delete(self, path, *args, **kwargs):
+        return super(Client, self).delete(resolve_url(path), *args, **kwargs)
+
+    def generic(self, method, path, *args, **kwargs):
+        return super(Client, self).generic(
+            method, resolve_url(path), *args, **kwargs)
+
+
 class TestCase(django.test.TestCase):
     """ TestCase with moderate superpowers """
+    client_class = Client
 
     PASSWORDS = {}
 
