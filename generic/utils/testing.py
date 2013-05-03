@@ -82,7 +82,7 @@ class TestCase(django.test.TestCase):
             if ignore_querystring and re.match(
                     r"Response redirected to '(.*){0}\?.*', "
                     r"expected '\1{0}'".format(expected_url),
-                    e.message
+                    unicode(e)
             ):
                 pass # silence AssertionError; only query string differed
             else:
