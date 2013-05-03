@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import hashlib
 import logging
+import re
 
 try:
     from django.contrib.auth import get_user_model
@@ -71,6 +72,21 @@ class TestCase(django.test.TestCase):
         except AssertionError:
             logger.warning('Searched content: """%s"""' % response.content)
             raise
+
+    def assertRedirects(self, response, expected_url, *args, **kwargs):
+        ignore_querystring = kwargs.pop('ignore_querystring', False)
+        try:
+            super(TestCase, self).assertRedirects(
+                response, expected_url, *args, **kwargs)
+        except AssertionError, e:
+            if ignore_querystring and re.match(
+                    r"Response redirected to '(.*){0}\?.*', "
+                    r"expected '\1{0}'".format(expected_url),
+                    e.message
+            ):
+                pass # silence AssertionError; only query string differed
+            else:
+                raise
 
     def assertContains(self, *args, **kwargs):
         return self._assertContains(
