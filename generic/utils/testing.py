@@ -29,27 +29,39 @@ def reloaded(obj):
 
 
 class Client(django.test.Client):
+    def resolve_path(self, path):
+        if isinstance(path, (tuple, list)): # ala @models.permalink
+            return reverse(path[0], None, *path[1:3])
+        else:
+            return resolve_url(path)
+
     def get(self, path, *args, **kwargs):
-        return super(Client, self).get(resolve_url(path), *args, **kwargs)
+        return super(Client, self).get(
+            self.resolve_path(path), *args, **kwargs)
 
     def post(self, path, *args, **kwargs):
-        return super(Client, self).post(resolve_url(path), *args, **kwargs)
+        return super(Client, self).post(
+            self.resolve_path(path), *args, **kwargs)
 
     def head(self, path, *args, **kwargs):
-        return super(Client, self).head(resolve_url(path), *args, **kwargs)
+        return super(Client, self).head(
+            self.resolve_path(path), *args, **kwargs)
 
     def options(self, path, *args, **kwargs):
-        return super(Client, self).options(resolve_url(path), *args, **kwargs)
+        return super(Client, self).options(
+            self.resolve_path(path), *args, **kwargs)
 
     def put(self, path, *args, **kwargs):
-        return super(Client, self).put(resolve_url(path), *args, **kwargs)
+        return super(Client, self).put(
+            self.resolve_path(path), *args, **kwargs)
 
     def delete(self, path, *args, **kwargs):
-        return super(Client, self).delete(resolve_url(path), *args, **kwargs)
+        return super(Client, self).delete(
+            self.resolve_path(path), *args, **kwargs)
 
     def generic(self, method, path, *args, **kwargs):
         return super(Client, self).generic(
-            method, resolve_url(path), *args, **kwargs)
+            method, self.resolve_path(path), *args, **kwargs)
 
 
 class TestCase(django.test.TestCase):
