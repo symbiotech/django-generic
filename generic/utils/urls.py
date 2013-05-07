@@ -1,3 +1,5 @@
+from django.conf.urls import include, patterns
+
 # TODO: docs
 
 nested_patterns = lambda *x: include(patterns('', *x))
