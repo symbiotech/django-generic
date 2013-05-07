@@ -63,16 +63,27 @@ class InlineFormSetView(View):
             or super(InlineFormSetView, self).requires_multipart_form()
         )
 
+    def get_formset_kwargs(self, formset_class):
+        return {
+            'data': self.request.POST or None,
+            'files': self.request.FILES or None,
+            'instance': getattr(self, 'object', None),
+        }
+
+    def get_formset(self, formset_class):
+        return formset_class(**self.get_formset_kwargs(formset_class))
+
     def get_form(self, form_class):
         self.formsets = {}
         for formset_class in self.formset_classes:
             key = formset_class.model._meta.module_name
-            self.formsets[key] = formset_class(
-                data=self.request.POST or None,
-                files=self.request.FILES or None,
-                instance=self.object)
+            self.formsets[key] = self.get_formset(formset_class)
         self.context_data['formsets'] = self.formsets
         return super(InlineFormSetView, self).get_form(form_class)
+
+    def save_formsets(self):
+        for formset in self.formsets.values():
+            formset.save()
 
     def form_valid(self, form):
         form = self.get_form(self.get_form_class())
@@ -82,6 +93,5 @@ class InlineFormSetView(View):
                 return self.form_invalid(form)
         # OK, all valid
         response = super(InlineFormSetView, self).form_valid(form)
-        for formset in self.formsets.values():
-            formset.save()
+        self.save_formsets()
         return response
