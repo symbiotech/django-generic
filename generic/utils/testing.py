@@ -108,7 +108,7 @@ class TestCase(django.test.TestCase):
         return self._assertContains(
             super(TestCase, self).assertNotContains, *args, **kwargs)
 
-    def create_user(self, identifier, password=None, super=False):
+    def create_user(self, identifier, password=None, super=False, **kwargs):
         """ Shortcut for creating users """
         password = password or get_hash(identifier+'PASSWORD')
         method = (
@@ -116,7 +116,7 @@ class TestCase(django.test.TestCase):
             User._default_manager.create_user
         )
         self.PASSWORDS[identifier] = password
-        return method(identifier, password=password)
+        return method(identifier, password=password, **kwargs)
 
     def login(self, username):
         """ Shortcut for logging in which asserts success """
