@@ -1,4 +1,6 @@
+import json
 import django.views.generic
+from django import http
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from .exceptions import PermissionDenied, RedirectInstead
@@ -12,6 +14,7 @@ class Authenticated(django.views.generic.View):
 
 class View(django.views.generic.View):
     result_text = 'OK'
+    ajax_catch_redirects = False
     default_context_data = {}
 
     def __init__(self, *args, **kwargs):
@@ -21,15 +24,16 @@ class View(django.views.generic.View):
     def finalize_response(self, response):
         """ Hook for any last-minute response tweaking; e.g. JSON for AJAX """
         if self.request.is_ajax() and response.status_code == 302:
-            return http.HttpResponse(
-                simplejson.dumps(
-                    {
-                        'redirect': response['location'],
-                        'result': self.result_text,
-                    }
-                ),
-                mimetype="application/json"
-            )
+            if self.ajax_catch_redirects:
+                return http.HttpResponse(
+                    json.dumps(
+                        {
+                            'redirect': response['location'],
+                            'result': self.result_text,
+                        }
+                    ),
+                    mimetype="application/json"
+                )
         return response
 
     def dispatch(self, request, *args, **kwargs):
