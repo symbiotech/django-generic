@@ -169,9 +169,10 @@ class TestCase(django.test.TestCase):
 
                 # that's all folks...
                 self.assertFalse(
-                    attributes, 'Untested attributes: %r' % attributes)
+                    attributes, 'Untested attributes: {!r}'.format(attributes))
             except AssertionError:
-                logger.warning('AssertionError while testing URL: %s' % url)
+                logger.warning(
+                    'AssertionError while testing URL: {!r}'.format(url))
                 raise
 
     def _test_admin(self, MODELS):
