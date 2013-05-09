@@ -434,3 +434,8 @@ def change_link(context, obj, **kwargs):
     }
     defaults.update(**kwargs)
     return _admin_link('change_link', 'change', context, **defaults)
+
+
+@register.inclusion_tag('generic/_js_static_urls.html')
+def js_static_urls(*args):
+    return {'urls': args}
