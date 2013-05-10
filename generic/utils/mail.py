@@ -17,11 +17,8 @@ class EmailMessage(mail.EmailMessage):
         self.template_name = kwargs.pop('template_name', None)
         self.context = kwargs.pop('context', None)
         self.request = kwargs.pop('request', dummy_request)
-        self.use_context_processors = kwargs.pop('use_context_processors', True)
-
-        # where there are multiple recipients in the 'to' field, send
-        # each one as a separate email to avoid exposing third-party addresses
-        self.send_separately = kwargs.pop('send_separately', False)
+        self.use_context_processors = kwargs.pop(
+            'use_context_processors', True)
 
         super(EmailMessage, self).__init__(*args, **kwargs)
 
@@ -33,16 +30,15 @@ class EmailMessage(mail.EmailMessage):
                 context = self.context
             self.body = render_to_string(self.template_name, context)
 
-    def send(self, fail_silently=False):
-        if self.send_separately:
-            messages = []
-            for address in self.to:
-                message = copy.copy(self) # no need for deepcopy here?
-                message.to = [address]
-                messages.append(message)
-            return self.get_connection(fail_silently).send_messages(messages)
-        else:
-            return super(EmailMessage, self).send(fail_silently)
+    def send_separately(self, fail_silently=False):
+        # where there are multiple recipients in the 'to' field, send
+        # each one as a separate email to avoid exposing third-party addresses
+        messages = []
+        for address in self.to:
+            message = copy.copy(self) # no need for deepcopy here?
+            message.to = [address]
+            messages.append(message)
+        return self.get_connection(fail_silently).send_messages(messages)
 
 
 class FallbackEmailMessage(EmailMessage):
