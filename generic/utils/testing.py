@@ -13,7 +13,10 @@ else:
     User = get_user_model()
 from django.core.urlresolvers import reverse
 from django.db import DEFAULT_DB_ALIAS, connections
-from django.shortcuts import resolve_url
+try:
+    from django.shortcuts import resolve_url
+except ImportError:
+    from .future import resolve_url
 import django.test
 from django.test.testcases import _AssertNumQueriesContext
 
