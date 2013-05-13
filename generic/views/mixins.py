@@ -56,6 +56,160 @@ class View(django.views.generic.View):
         return hasattr(self, 'form') and self.form.is_multipart()
 
 
+# WIP...
+# class MultiFormMixin(ContextMixin):
+#     """
+#     A mixin that provides a way to show and handle multiple forms in a request.
+#     """
+
+#     initial = {}
+#     form_classes = {}
+#     formset_classes = {}
+#     success_url = None
+
+#     def get_initial(self, form_key):
+#         """
+#         Returns the initial data to use for forms on this view.
+#         """
+#         return self.initial.get(form_key, {}).copy()
+
+#     def get_form_classes(self):
+#         """
+#         Returns the form classes to use in this view
+#         """
+#         return self.form_classes
+
+#     def get_forms(self, form_classes):
+#         """
+#         Returns instances of the forms to be used in this view.
+#         """
+#         return [
+#             form_class(**self.get_form_kwargs(key)) for
+#             key, form_class in self.get_form_classes().iteritems()
+#         ]
+
+#     def get_form_kwargs(self, form_key):
+#         """
+#         Returns the keyword arguments for instantiating the form.
+#         """
+#         kwargs = {'initial': self.get_initial(form_key)}
+#         if self.request.method in ('POST', 'PUT'):
+#             kwargs.update({
+#                 'data': self.request.POST,
+#                 'files': self.request.FILES,
+#             })
+#         return kwargs
+
+#     def get_formset_kwargs(self, formset_class):
+#         return {
+#             'data': self.request.POST or None,
+#             'files': self.request.FILES or None,
+#             'instance': getattr(self, 'object', None),
+#         }
+
+#     def get_formset(self, formset_class):
+#         return formset_class(**self.get_formset_kwargs(formset_class))
+
+#     def get_formsets(self, formset_class=None):
+#         form_class
+#         formsets = {}
+#         for key, formset_class in self.formset_classes.iteritems():
+#             formsets[key] = self.get_formset(formset_class)
+#         return formsets
+
+#     def save_formsets(self):
+#         for formset in self.formsets.values():
+#             formset.save()
+
+#     def form_valid(self, form):
+#         form = self.get_form(self.get_form_class())
+#         for formset in self.formsets.values():
+#             formset.instance = form.save(commit=False)
+#             if not formset.is_valid():
+#                 return self.form_invalid(form)
+#         # OK, all valid
+#         response = super(InlineFormSetView, self).form_valid(form)
+#         self.save_formsets()
+#         return response
+
+#     def get_success_url(self):
+#         """
+#         Returns the supplied success URL.
+#         """
+#         if self.success_url:
+#             # Forcing possible reverse_lazy evaluation
+#             url = force_text(self.success_url)
+#         else:
+#             raise ImproperlyConfigured(
+#                 "No URL to redirect to. Provide a success_url.")
+#         return url
+
+#     def all_valid(self, forms):
+#         for form in forms:
+#             if not form.is_valid():
+#                 return False
+#         return True
+
+#     def forms_valid(self, forms):
+#         """
+#         Forms are valid, redirect to the supplied URL.
+#         """
+
+#         return http.HttpResponseRedirect(self.get_success_url())
+
+#     def forms_invalid(self, form):
+#         """
+#         If any form is invalid, re-render the context data with the
+#         data-filled forms and errors.
+#         """
+#         return self.render_to_response(self.get_context_data(forms=forms))
+
+
+# class MultiFormView(View):
+#     """
+#     A mixin that renders forms on GET and processes them on POST.
+#     """
+#     def get(self, request, *args, **kwargs):
+#         """
+#         Handles GET requests and instantiates a blank version of the form.
+#         """
+#         form_classes = self.get_form_classes()
+#         forms = self.get_forms(form_classes)
+#         formset_classes = self.get_formset_classes()
+#         formsets = self.get_formsets(formset_classes)
+#         return self.render_to_response(
+#             self.get_context_data(
+#                 forms=forms,
+#                 formsets=formsets,
+#             )
+#         )
+
+#     def post(self, request, *args, **kwargs):
+#         """
+#         Handles POST requests, instantiating form instances with the passed
+#         POST variables and then checking for validity.
+#         """
+#         form_classes = self.get_form_classes()
+#         forms = self.get_forms(form_classes)
+#         formset_classes = self.get_formset_classes()
+#         formsets = self.get_formsets(formset_classes)
+#         if self.all_valid(forms, formsets):
+#             return self.forms_valid(forms, formsets)
+#         else:
+#             return self.forms_invalid(form, formsets)
+
+#     # PUT is a valid HTTP verb for creating (with a known URL) or editing an
+#     # object, note that browsers only support POST for now.
+#     def put(self, *args, **kwargs):
+#         return self.post(*args, **kwargs)
+
+#     def requires_multipart_form(self):
+#         return (
+#             any([formset.is_multipart() for formset in self.formsets.values()])
+#             or super(InlineFormSetView, self).requires_multipart_form()
+#         )
+
+
 class InlineFormSetView(View):
     """ Validates and saves both self.form and self.formsets """
     formset_classes = ()
@@ -85,17 +239,41 @@ class InlineFormSetView(View):
         self.context_data['formsets'] = self.formsets
         return super(InlineFormSetView, self).get_form(form_class)
 
-    def save_formsets(self):
+    def is_valid(self, form):
+        if not form.is_valid():
+            return False
+        instance = form.save(commit=False)
         for formset in self.formsets.values():
+            formset.instance = instance
+            if not formset.is_valid():
+                return False
+        return True
+
+    def save_form(self, form):
+        assert(form.is_valid())
+        self.object = form.save()
+        for formset in self.formsets.values():
+            formset.instance = self.object
+            assert(formset.is_valid())
             formset.save()
+        return self.object
 
     def form_valid(self, form):
-        form = self.get_form(self.get_form_class())
-        for formset in self.formsets.values():
-            formset.instance = form.save(commit=False)
-            if not formset.is_valid():
-                return self.form_invalid(form)
-        # OK, all valid
-        response = super(InlineFormSetView, self).form_valid(form)
-        self.save_formsets()
-        return response
+        self.save_form(form)
+        return http.HttpResponseRedirect(self.get_success_url())
+
+    def post(self, request, *args, **kwargs):
+        if hasattr(self, 'get_object'):
+            self.object = self.get_object()
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
+        if self.is_valid(form):
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+
+# TODO:
+# - multi-form view (above)
+# - auto-hashing URL view /my-user/with/params/<hash-of-preceeding-path>/
+#  - prevents alteration
