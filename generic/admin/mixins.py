@@ -1,3 +1,5 @@
+import logging
+
 from django import forms
 from django import http
 from django.conf import settings
@@ -17,6 +19,8 @@ except ImportError:
     from django.utils import simplejson as json
 
 from .widgets import ForeignKeyCookedIdWidget, ManyToManyCookedIdWidget
+
+logger = logging.getLogger(__name__)
 
 class CookedIdAdmin(admin.ModelAdmin):
     """
@@ -278,6 +282,41 @@ class BatchUpdateAdmin(admin.ModelAdmin):
     def _validate_batch_update_fields(self):
         for field in self.batch_update_fields:
             field = self.model._meta.get_field(field)
+
+
+class ThumbnailAdminMixin(admin.ModelAdmin):
+    """
+    Shortcut for displaying a thumbnail in a changelist.
+
+    Requires easy-thumbnails.
+
+    Specify ImageField name in `thumbnail_field`, and optionally override
+    `thumbnail_options` for customisation such as sizing, cropping, etc.
+    Plays nicely with list_display_links if you want a clickable thumbnail.
+    """
+
+    thumbnail_field = None
+    thumbnail_options = {'size': (100,100)}
+
+    def thumbnail(self, obj):
+        if not self.thumbnail_field:
+            logger.warning('ThumbnailAdminMixin.thumbnail_field unspecified')
+            return ''
+
+        try:
+            field_value = getattr(obj, self.thumbnail_field)
+        except AttributeError:
+            logger.error('ThumbnailAdminMixin.thumbnail_field getattr failed')
+            return ''
+
+        if field_value:
+            from easy_thumbnails.files import get_thumbnailer
+            thumbnailer = get_thumbnailer(field_value)
+            thumbnail = thumbnailer.get_thumbnail(self.thumbnail_options)
+            return '<img class="thumbnail" src="{0}" />'.format(thumbnail.url)
+        else:
+            return ''
+    thumbnail.allow_tags = True
 
 
 from ..models.delible import Delible
