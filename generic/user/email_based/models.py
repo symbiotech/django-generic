@@ -4,12 +4,25 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
+class UserQuerySet(models.query.QuerySet):
+    def _filter_or_exclude(self, *args, **kwargs):
+        """ Make email lookups case-insensitive """
+        if 'email' in kwargs:
+            kwargs['email__iexact'] = kwargs.pop('email')
+        return super(UserQuerySet, self)._filter_or_exclude(*args, **kwargs)
+
+    def active(self):
+        return self.filter(is_active=True)
+
+
 class EmailBasedUserManager(BaseUserManager):
+    def get_query_set(self):
+        return UserQuerySet(self.model, using=self._db)
+
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('Users must have an email address')
         user = self.model(email=self.normalize_email(email), **extra_fields)
-        # TODO: handle email address clashes
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -23,8 +36,7 @@ class EmailBasedUserManager(BaseUserManager):
         return user
 
     def active(self):
-        # TODO: add to queryset also
-        return self.filter(is_active=True)
+        return self.get_query_set().active()
 
 
 class EmailBasedUser(AbstractBaseUser, PermissionsMixin):
