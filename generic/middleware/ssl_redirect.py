@@ -24,4 +24,7 @@ class SSLRedirect:
                 "data. Please structure your views so that redirects only "
                 "occur during GETs."
             )
-        return http.HttpResponsePermanentRedirect(newurl)
+        if getattr(settings, 'SSL_REDIRECTS_PERMANENT', True):
+            return http.HttpResponsePermanentRedirect(newurl)
+        else:
+            return http.HttpResponseRedirect(newurl)
