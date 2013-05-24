@@ -15,7 +15,7 @@ class SSLRedirect:
         protocol = 'https' if secure else 'http'
         newurl = "%s://%s%s" % (
             protocol,
-            http.get_host(request),
+            request.get_host(),
             request.get_full_path()
         )
         if settings.DEBUG and request.method == 'POST':
