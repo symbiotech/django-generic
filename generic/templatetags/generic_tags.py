@@ -388,19 +388,21 @@ def _admin_link(tag_name, link_type, context, **kwargs):
             querystring_dict[key[len(QUERYSTRING_PREFIX):]] = kwargs.get(key)
     querystring = querystring_dict.urlencode()
 
-    return '<a href="%s%s" class="admin-link">%s</a>' % (
-        reverse(
-            '%s:%s_%s_%s' % (
-                admin_namespace,
-                model._meta.app_label,
-                model._meta.module_name,
-                link_type,
+    return mark_safe(
+        '<a href="%s%s" class="admin-link">%s</a>' % (
+            reverse(
+                '%s:%s_%s_%s' % (
+                    admin_namespace,
+                    model._meta.app_label,
+                    model._meta.module_name,
+                    link_type,
+                ),
+                args=kwargs.pop('reverse_args', ()),
+                kwargs=kwargs.pop('reverse_kwargs', {}),
             ),
-            args=kwargs.pop('reverse_args', ()),
-            kwargs=kwargs.pop('reverse_kwargs', {}),
-        ),
-        ('?%s' % querystring) if querystring else '',
-        link_text,
+            ('?%s' % querystring) if querystring else '',
+            link_text,
+        )
     )
 
 
@@ -434,6 +436,18 @@ def change_link(context, obj, **kwargs):
     }
     defaults.update(**kwargs)
     return _admin_link('change_link', 'change', context, **defaults)
+
+
+@register.assignment_tag(takes_context=True)
+def get_add_link(context, model_string, **kwargs):
+    """ {% get_add_link 'myapp.Model' as add_link %} {% if add_link %} ...  """
+    return add_link(context, model_string, **kwargs)
+
+
+@register.assignment_tag(takes_context=True)
+def get_change_link(context, obj, **kwargs):
+    """ {% get_change_link obj as change_link %} {% if change_link %} ...  """
+    return change_link(context, obj, **kwargs)
 
 
 @register.inclusion_tag('generic/_js_static_urls.html')
