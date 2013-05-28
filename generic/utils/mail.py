@@ -70,3 +70,51 @@ class FallbackEmailMessage(EmailMessage):
             self.subject = u''.join([self.fallback_prefix, self.subject])
             self.body = u'\n'.join([self.fallback_body_prefix, self.body])
         return super(FallbackEmailMessage, self).send(fail_silently)
+
+
+class TemplateEmail(mail.EmailMultiAlternatives):
+    base_body_template = 'generic/email/body.txt'
+    base_subject_template = 'generic/email/subject.txt'
+    base_html_template = 'generic/email/body.html'
+
+    def __init__(self, template_name, context=None, **kwargs):
+        self.template_name = template_name
+        self.context = context or {}
+        self.request = kwargs.pop('request', dummy_request)
+        self.process_context = kwargs.pop('process_context', True)
+
+        super(TemplateEmail, self).__init__(**kwargs)
+
+        if self.template_name:
+            self.body = self.body or self.render_body()
+            self.subject = self.subject or self.render_subject()
+            html = self.render_html()
+            if html.strip():
+                self.attach_alternative(html, 'text/html')
+
+    def _get_context(self, base_template):
+        if self.process_context:
+            context = RequestContext(self.request)
+            context.update(self.context)
+        else:
+            context = self.context
+        context['base_template'] = base_template
+        return context
+
+    def render_body(self):
+        return render_to_string(
+            self.template_name,
+            self._get_context(self.base_body_template)
+        )
+
+    def render_subject(self):
+        return render_to_string(
+            self.template_name,
+            self._get_context(self.base_subject_template)
+        ).replace('\n', ' ').strip() # enforce single-line
+
+    def render_html(self):
+        return render_to_string(
+            self.template_name,
+            self._get_context(self.base_html_template)
+        )
