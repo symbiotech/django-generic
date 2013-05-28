@@ -1,9 +1,13 @@
 import json
 import django.views.generic
+
 from django import http
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import resolve_url
 from django.utils.decorators import method_decorator
+
 from .exceptions import PermissionDenied, RedirectInstead
+from ..utils.tokens import get_token
 
 class Authenticated(django.views.generic.View):
     """ Base for views which require an authenticated user """
@@ -275,5 +279,49 @@ class InlineFormSetView(View):
 
 # TODO:
 # - multi-form view (above)
-# - auto-hashing URL view /my-user/with/params/<hash-of-preceeding-path>/
-#  - prevents alteration
+
+class HashedURLView(django.views.generic.View):
+    """
+    Use with patterns such as r'/path/with/(?P<param>\w+)/(?P<hash>\w*)/'
+    -- prevents alteration of parameters and can act as a verification token.
+
+    The hash pattern must accept a blank value for ease of reversing the URL.
+
+    Place hash parameter at the end of the URL in case the pattern happens to
+    exist elsewhere in the URL -- the last occurrence is removed when
+    calculating the hash.
+
+    Other parameters in the URL can be obfuscated in conjunction with the
+    hash if you like, e.g. r'^verify/a(?P<user_id>\d+)b(?P<hash>\w*)/$'
+
+    Obtain the valid hashed version of a URL by calling HashedURLView.reverse:
+    e.g. Verify.reverse('verify', new_user.id)
+    """
+
+    hash_parameter = 'hash'
+
+    @classmethod
+    def hash_path(cls, path):
+        return get_token(path=path)
+
+    @classmethod
+    def reverse(cls, to, *args, **kwargs):
+        if args:
+            args = list(args) + ['']
+        else:
+            kwargs[cls.hash_parameter] = ''
+        base_url = resolve_url(to, *args, **kwargs)
+        if args:
+            args[-1] = cls.hash_path(base_url)
+        else:
+            kwargs[cls.hash_parameter] = cls.hash_path(base_url)
+        return resolve_url(to, *args, **kwargs)
+
+    def dispatch(self, request, *args, **kwargs):
+        provided_hash = kwargs.get(self.hash_parameter)
+        expected_hash = self.hash_path(
+            ''.join(request.path_info.rsplit(provided_hash, 1)) # replace last
+        )
+        if provided_hash != expected_hash:
+            return http.HttpResponseForbidden('Invalid hash')
+        return super(HashedURLView, self).dispatch(request, *args, **kwargs)
