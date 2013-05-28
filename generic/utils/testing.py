@@ -11,6 +11,7 @@ except ImportError:
     from django.contrib.auth.models import User
 else:
     User = get_user_model()
+from django.core import mail
 from django.core.urlresolvers import reverse
 from django.db import DEFAULT_DB_ALIAS, connections
 try:
@@ -230,6 +231,23 @@ class TestCase(django.test.TestCase):
 
         with context:
             func(*args, **kwargs)
+
+    def extract_urls_from_email(self, message=None, path_only=True):
+        if message is None:
+            message = mail.outbox[-1]
+        matches = re.findall(
+            r'(?P<scheme>\w*:?//)(?P<domain>[\w\-\.]+)(?P<path>\S+)',
+            message.body,
+        )
+        if path_only:
+            return zip(*matches)[2]
+        else:
+            return map(''.join, matches)
+
+    def extract_url_from_email(self, message=None, path_only=True):
+        urls = self.extract_urls_from_email(message, path_only)
+        self.assertEqual(len(urls), 1)
+        return urls[0]
 
 
 class _VerboseAssertNumQueriesContext(_AssertNumQueriesContext):
