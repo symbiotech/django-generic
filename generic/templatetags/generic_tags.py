@@ -3,10 +3,12 @@ import re
 from django import forms
 from django import template
 from django.conf import settings
+from django.contrib.sites.models import get_current_site
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.db.models import get_model
 from django.http import QueryDict
+from django.shortcuts import resolve_url
 from django.template import Node
 from django.template import TemplateSyntaxError
 from django.template.defaultfilters import stringfilter, fix_ampersands
@@ -453,3 +455,23 @@ def get_change_link(context, obj, **kwargs):
 @register.inclusion_tag('generic/_js_static_urls.html')
 def js_static_urls(*args):
     return {'urls': args}
+
+
+@register.simple_tag(takes_context=True)
+def absolute_url(context, resolvable, scheme='http', domain=None):
+    if not domain:
+        if 'request' in context:
+            domain = get_current_site(context['request']).domain
+        elif hasattr(settings, 'SITE_DOMAIN'):
+            domain = settings.SITE_DOMAIN
+        else:
+            raise RuntimeError(
+                "{% absolute_url %} unable to determine domain"
+            )
+
+    return '{0}{1}//{2}{3}'.format(
+        scheme,
+        ':' if scheme else '',
+        domain,
+        resolve_url(resolvable),
+    )
