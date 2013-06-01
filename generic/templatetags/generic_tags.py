@@ -8,7 +8,10 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.db.models import get_model
 from django.http import QueryDict
-from django.shortcuts import resolve_url
+try:
+    from django.shortcuts import resolve_url
+except ImportError:
+    from generic.utils.future import resolve_url
 from django.template import Node
 from django.template import TemplateSyntaxError
 from django.template.defaultfilters import stringfilter, fix_ampersands
