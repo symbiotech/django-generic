@@ -39,7 +39,7 @@ def cache_method(cache_name=None):
             else:
                 try:
                     result = cache_obj.get(cache_key)
-                except Exception as e:
+                except Exception, e:
                     logger.warning('Cache error: {0}'.format(e))
                     result = None
                 if result is None:
