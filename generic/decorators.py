@@ -52,7 +52,8 @@ def cache_method(cache_name=None):
                 else:
                     debug_info.append('hit')
             debug_info.append(result)
-            logger.debug(u' -- '.join(map(unicode, debug_info)))
+            if getattr(settings, 'GENERIC_CACHE_METHOD_DEBUG', False):
+                logger.debug(u' -- '.join(map(unicode, debug_info)))
             return result
         return wrapped_method
     return inner
