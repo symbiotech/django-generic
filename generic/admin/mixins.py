@@ -322,8 +322,6 @@ class ThumbnailAdminMixin(admin.ModelAdmin):
 
 
 class CSVExportAdmin(admin.ModelAdmin):
-    csv_export_fields = None
-
     def _get_url_name(self, view_name, include_namespace=True):
         return '%s%s_%s_%s' % (
             'admin:' if include_namespace else '',
