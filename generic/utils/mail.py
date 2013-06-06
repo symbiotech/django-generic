@@ -1,6 +1,7 @@
 import copy
 import logging
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 from django.core import mail
 from django.template import RequestContext
 from django.template.loader import render_to_string
@@ -8,7 +9,11 @@ from django.test import RequestFactory
 
 logger = logging.getLogger(__name__)
 
-dummy_request = RequestFactory().request()
+def get_dummy_request():
+    dummy_request = RequestFactory().request()
+    dummy_request.session = {}
+    dummy_request.user = AnonymousUser()
+    return dummy_request
 
 class EmailMessage(mail.EmailMessage):
     """ Generic feature additions to the standard EmailMessage """
@@ -16,7 +21,7 @@ class EmailMessage(mail.EmailMessage):
         # template-rendering shortcuts:
         self.template_name = kwargs.pop('template_name', None)
         self.context = kwargs.pop('context', None)
-        self.request = kwargs.pop('request', dummy_request)
+        self.request = kwargs.pop('request', get_dummy_request())
         self.use_context_processors = kwargs.pop(
             'use_context_processors', True)
 
@@ -80,7 +85,7 @@ class TemplateEmail(mail.EmailMultiAlternatives):
     def __init__(self, template_name, context=None, **kwargs):
         self.template_name = template_name
         self.context = context or {}
-        self.request = kwargs.pop('request', dummy_request)
+        self.request = kwargs.pop('request', get_dummy_request())
         self.process_context = kwargs.pop('process_context', True)
 
         super(TemplateEmail, self).__init__(**kwargs)
