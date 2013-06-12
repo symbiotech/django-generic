@@ -478,3 +478,26 @@ def absolute_url(context, resolvable, scheme='http', domain=None):
         domain,
         resolve_url(resolvable),
     )
+
+
+@register.filter
+def file_exists(field_file):
+    """
+    Shortcut for ensuring FileField values actually exist.
+    E.g.
+
+      {% if instance.file_field|file_exists %}
+        {{ instance.file_field.size|filesizeformat }}
+        {# (accessing .size would otherwise raise an exception) #}
+      {% else %}
+        File missing!
+      {% endif %}
+
+    """
+    try:
+        return bool(field_file and field_file.storage.exists(field_file.name))
+    except Exception:
+        if settings.DEBUG:
+            raise
+        else:
+            return None
