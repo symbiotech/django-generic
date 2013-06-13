@@ -421,3 +421,48 @@ class DelibleAdmin(admin.ModelAdmin):
                         self.model._meta.module_name))
                 ) + urls
         return urls
+
+
+class ChangeLinkInline(admin.TabularInline):
+    """
+    Base class for inlines which link to change forms for further editing.
+
+    Simple workaround for "deep" admin interfaces which would otherwise
+    require "nested inlines". See https://code.djangoproject.com/ticket/9025
+
+    Generally useful in conjunction with ChangeFormOnlyAdmin below.
+    """
+
+    readonly_fields = ('change_link',)
+
+    def change_link(self, obj):
+        if obj.id is None:
+            return 'Not yet saved'
+        return '<a href="%s">Click to edit</a>' % reverse(
+            'admin:%s_%s_change' % (
+                obj._meta.app_label,
+                obj._meta.module_name,
+            ),
+            args=(obj.id,)
+        )
+    change_link.allow_tags = True
+    change_link.short_description = 'Edit'
+
+
+class ChangeFormOnlyAdmin(admin.ModelAdmin):
+    """
+    For models which don't require an independent change list.
+
+    Generally used with ChangeLinkInline (above) where the inlines on the
+    parent object basically act as the change-list.
+    """
+    def has_change_permission(self, request, obj=None):
+        if obj is None:
+            return False
+        return super(
+            ChangeFormOnlyAdmin, self).has_change_permission(request, obj)
+
+    # TODO: rewrite/redirect change_list links in breadcrumbs, etc
+
+    def has_add_permission(self, request):
+        return False
