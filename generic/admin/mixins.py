@@ -438,11 +438,14 @@ class ChangeLinkInline(admin.TabularInline):
     """
 
     readonly_fields = ('change_link',)
+    change_link_text = 'Click to edit'
+    change_link_title = 'Edit'
+    change_link_unsaved_text = 'Not yet saved'
 
     def change_link(self, obj):
         if obj.id is None:
-            return 'Not yet saved'
-        return '<a href="%s">Click to edit</a>' % (
+            return self.change_link_unsaved_text
+        return '<a href="%s">%s</a>' % (
             reverse(
                 'admin:%s_%s_change' % (
                     obj._meta.app_label,
@@ -451,9 +454,10 @@ class ChangeLinkInline(admin.TabularInline):
                 args=(obj.id,),
                 current_app=self.admin_site.name,
             ),
+            self.change_link_text,
         )
     change_link.allow_tags = True
-    change_link.short_description = 'Edit'
+    change_link.short_description = change_link_title
 
 
 class ChangeFormOnlyAdmin(admin.ModelAdmin):
