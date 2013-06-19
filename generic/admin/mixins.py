@@ -440,12 +440,15 @@ class ChangeLinkInline(admin.TabularInline):
     def change_link(self, obj):
         if obj.id is None:
             return 'Not yet saved'
-        return '<a href="%s">Click to edit</a>' % reverse(
-            'admin:%s_%s_change' % (
-                obj._meta.app_label,
-                obj._meta.module_name,
+        return '<a href="%s">Click to edit</a>' % (
+            reverse(
+                'admin:%s_%s_change' % (
+                    obj._meta.app_label,
+                    obj._meta.module_name,
+                ),
+                args=(obj.id,),
+                current_app=self.admin_site.name,
             ),
-            args=(obj.id,)
         )
     change_link.allow_tags = True
     change_link.short_description = 'Edit'
@@ -464,10 +467,32 @@ class ChangeFormOnlyAdmin(admin.ModelAdmin):
         return super(
             ChangeFormOnlyAdmin, self).has_change_permission(request, obj)
 
-    # TODO: rewrite/redirect change_list links in breadcrumbs, etc
+    def changelist_view(self, request, extra_context=None):
+        # e.g. if you click on a breadcrumb link
+        return redirect('..')
 
     def has_add_permission(self, request):
         return False
+
+    def get_parent(self, obj, request):
+        """ Override this method to auto-return on post-save """
+        return None
+
+    def response_post_save_change(self, request, obj):
+        parent = self.get_parent(obj, request)
+        if parent:
+            return http.HttpResponseRedirect(
+                reverse(
+                    'admin:%s_%s_change' % (
+                        parent._meta.app_label,
+                        parent._meta.module_name,
+                    ),
+                    args=(parent.pk,),
+                    current_app=self.admin_site.name
+                )
+            )
+        return super(
+            ChangeFormOnlyAdmin, self).response_post_save_change(request, obj)
 
 # TODO: reorganise these modules, they're getting too big.
 
