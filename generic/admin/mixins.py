@@ -304,20 +304,21 @@ class ThumbnailAdminMixin(object):
     thumbnail_field = None
     thumbnail_options = {'size': (100,100)}
 
-    def thumbnail(self, obj):
-        if not self.thumbnail_field:
+    def get_thumbnail_source(self, obj):
+        if self.thumbnail_field:
+            try:
+                return getattr(obj, self.thumbnail_field)
+            except AttributeError:
+                logger.error(
+                    'ThumbnailAdminMixin.thumbnail_field getattr failed')
+        else:
             logger.warning('ThumbnailAdminMixin.thumbnail_field unspecified')
-            return ''
 
-        try:
-            field_value = getattr(obj, self.thumbnail_field)
-        except AttributeError:
-            logger.error('ThumbnailAdminMixin.thumbnail_field getattr failed')
-            return ''
-
-        if field_value:
+    def thumbnail(self, obj):
+        source = self.get_thumbnail_source(obj)
+        if source:
             from easy_thumbnails.files import get_thumbnailer
-            thumbnailer = get_thumbnailer(field_value)
+            thumbnailer = get_thumbnailer(source)
             thumbnail = thumbnailer.get_thumbnail(self.thumbnail_options)
             return '<img class="thumbnail" src="{0}" />'.format(thumbnail.url)
         else:
@@ -439,7 +440,6 @@ class ChangeLinkInline(admin.TabularInline):
 
     readonly_fields = ('change_link',)
     change_link_text = 'Click to edit'
-    change_link_title = 'Edit'
     change_link_unsaved_text = 'Not yet saved'
 
     def change_link(self, obj):
@@ -457,7 +457,7 @@ class ChangeLinkInline(admin.TabularInline):
             self.change_link_text,
         )
     change_link.allow_tags = True
-    change_link.short_description = change_link_title
+    change_link.short_description = 'Edit'
 
 
 class ChangeFormOnlyAdmin(admin.ModelAdmin):
