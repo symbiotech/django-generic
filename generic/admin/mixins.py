@@ -288,15 +288,17 @@ class BatchUpdateAdmin(admin.ModelAdmin):
             field = self.model._meta.get_field(field)
 
 
-class ThumbnailAdminMixin(admin.ModelAdmin):
+class ThumbnailAdminMixin(object):
     """
-    Shortcut for displaying a thumbnail in a changelist.
+    Shortcut for displaying a thumbnail in a changelist (or inline).
 
     Requires easy-thumbnails.
 
     Specify ImageField name in `thumbnail_field`, and optionally override
     `thumbnail_options` for customisation such as sizing, cropping, etc.
     Plays nicely with list_display_links if you want a clickable thumbnail.
+
+    Add 'thumbnail' to `list_display` or `readonly_fields`, etc to display.
     """
 
     thumbnail_field = None
