@@ -3,10 +3,11 @@ import django.views.generic
 
 from django import http
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import resolve_url
 from django.utils.decorators import method_decorator
 
-from .exceptions import PermissionDenied, RedirectInstead
+from .exceptions import RedirectInstead
 from ..utils.tokens import get_token
 
 class Authenticated(django.views.generic.View):
@@ -44,8 +45,9 @@ class View(django.views.generic.View):
         """ Allow translation of custom exceptions into HTTP responses. """
         try:
             response = super(View, self).dispatch(request, *args, **kwargs)
-        except PermissionDenied:
-            response = http.HttpResponseForbidden('Permission denied')
+        except PermissionDenied as forbidden_exception:
+            response = http.HttpResponseForbidden(
+                forbidden_exception.message or 'Permission denied')
         except RedirectInstead as redirect_exception:
             response = redirect(redirect_exception.message)
         return self.finalize_response(response)
