@@ -63,7 +63,7 @@ class CookedIdAdmin(admin.ModelAdmin):
     def get_urls(self):
         return patterns(
             '',
-            url(r'^cook-ids/(?P<field_name>\w+)/(?P<raw_ids>[^/]*)/?$',
+            url(r'^cook-ids/(?P<field_name>\w+)/(?P<raw_ids>[\d,]+)/$',
                 self.admin_site.admin_view(self.cook_ids))
         ) + super(CookedIdAdmin, self).get_urls()
 
