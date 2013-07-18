@@ -370,8 +370,8 @@ def _admin_link(tag_name, link_type, context, **kwargs):
     # admin site objects? Registered via admin?
     if not request.user.has_perm(
         '%s.%s_%s' % (
-            link_type,
             model._meta.app_label,
+            link_type,
             model._meta.module_name,
         )
     ):
