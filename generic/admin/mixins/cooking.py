@@ -1,24 +1,18 @@
 from django import http
 from django.conf import settings
 from django.contrib import admin
+from django.core.exceptions import ImproperlyConfigured
+from ..widgets import ForeignKeyCookedIdWidget, ManyToManyCookedIdWidget
 
 try:
-    # Prevent deprecation warnings on Django >= 1.4
     from django.conf.urls import patterns, url
 except ImportError:
-    # For compatibility with Django <= 1.3
     from django.conf.urls.defaults import patterns, url
-
-from django.core.exceptions import ImproperlyConfigured
-from django.shortcuts import get_object_or_404, redirect
 
 try:
     import json
 except ImportError:
     from django.utils import simplejson as json
-
-from .. import models
-from .widgets import ForeignKeyCookedIdWidget, ManyToManyCookedIdWidget
 
 class CookedIdAdmin(admin.ModelAdmin):
     """
@@ -54,7 +48,10 @@ class CookedIdAdmin(admin.ModelAdmin):
         target_model_admin = self.admin_site._registry.get(
             self.model._meta.get_field(field_name).rel.to)
         response_data = {}
-        if target_model_admin:
+        if (
+                target_model_admin and
+                target_model_admin.has_change_permission(request)
+        ):
             for obj in target_model_admin.queryset(request).filter(id__in=ids):
                 response_data[obj.pk] = self.cook(
                     obj, request=request, field_name=field_name)
@@ -66,7 +63,7 @@ class CookedIdAdmin(admin.ModelAdmin):
     def get_urls(self):
         return patterns(
             '',
-            url(r'^cook-ids/(?P<field_name>\w+)/(?P<raw_ids>.*)/$',
+            url(r'^cook-ids/(?P<field_name>\w+)/(?P<raw_ids>[\d,]+)/$',
                 self.admin_site.admin_view(self.cook_ids))
         ) + super(CookedIdAdmin, self).get_urls()
 
@@ -101,45 +98,3 @@ class CookedIdAdmin(admin.ModelAdmin):
                     db_field.rel, self.admin_site)
         return super(CookedIdAdmin, self).formfield_for_foreignkey(
             db_field, request=request, **kwargs)
-
-
-
-class DelibleAdmin(admin.ModelAdmin):
-    """ Admin with "undelete" functionality for Delible objects """
-    change_form_template = 'admin/delible_change_form.html'
-
-    def delete_model(self, request, obj):
-        if isinstance(obj, models.Delible):
-            obj.delete(request=request)
-        else:
-            obj.delete()
-
-    def undelete(self, request, pk):
-        permission = '%s.delete_%s' % (
-            self.model._meta.app_label, self.model._meta.module_name)
-        if not request.user.has_perm(permission):
-            return http.HttpResponseForbidden()
-        else:
-            obj = get_object_or_404(self.model, pk=pk)
-            try:
-                obj.undelete()
-            except AttributeError:
-                self.message_user(request, 'Error; cannot undelete.')
-            else:
-                self.message_user(request, u"%s undeleted!" % obj)
-            return redirect(
-                'admin:%s_%s_change' % (
-                    obj._meta.app_label, obj._meta.module_name), obj.pk)
-
-    def get_urls(self):
-        urls = super(DelibleAdmin, self).get_urls()
-        if issubclass(self.model, models.Delible):
-            urls = patterns(
-                '', url(
-                    r'^(?P<pk>.+)/undelete/$',
-                    self.admin_site.admin_view(self.undelete),
-                    name='%s_%s_undelete' % (
-                        self.model._meta.app_label,
-                        self.model._meta.module_name))
-                ) + urls
-        return urls

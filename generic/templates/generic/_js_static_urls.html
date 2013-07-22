@@ -1,0 +1,7 @@
+{% load staticfiles %}<script type="text/javascript">
+  window.static_url = function(path){
+    return {{% for url in urls %}
+        "{{ url }}": "{% static url %}"{% if not forloop.last %},{% endif %}{% endfor %}
+    }[path] || ('#missing-static-url-' + path);
+  };
+</script>

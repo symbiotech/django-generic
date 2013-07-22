@@ -2,9 +2,18 @@ import re
 
 from django import forms
 from django import template
+from django.conf import settings
+from django.contrib.sites.models import get_current_site
+from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
+from django.db.models import get_model
 from django.http import QueryDict
+try:
+    from django.shortcuts import resolve_url
+except ImportError:
+    from generic.utils.future import resolve_url
 from django.template import Node
+from django.template import TemplateSyntaxError
 from django.template.defaultfilters import stringfilter, fix_ampersands
 from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe
@@ -332,3 +341,163 @@ class MarkCurrentLinksNode(template.Node):
                 attributes += ' class="%s"' % self.css_class
             return attributes
         return re.sub(r'href="(?P<url>[^"]+)"', replace_attributes, output)
+
+
+def _admin_link(tag_name, link_type, context, **kwargs):
+    try:
+        request = context['request']
+    except KeyError:
+        if settings.DEBUG:
+            raise ImproperlyConfigured(
+                '{%% %s %%} requires the request to be accessible '
+                'within the template context; perhaps install '
+                'django.core.context_processors.request?' % tag_name
+            )
+        else:
+            return ''
+
+    if (
+        not hasattr(request, 'user') or
+        not request.user.is_authenticated() or
+        not request.user.is_staff
+    ):
+        return ''
+
+    model = kwargs.get('model')
+
+    # TODO: consider trying to lookup AdminSite._registry and checking
+    # permissions on ModelAdmin itself -- but how to find the non-standard
+    # admin site objects? Registered via admin?
+    if not request.user.has_perm(
+        '%s.%s_%s' % (
+            model._meta.app_label,
+            link_type,
+            model._meta.module_name,
+        )
+    ):
+        return ''
+
+    admin_namespace = kwargs.pop('admin_namespace', 'admin')
+    # TODO: i18n
+    link_text = kwargs.pop('link_text').replace(
+        '<verbose_name>',
+        unicode(model._meta.verbose_name)
+    )
+
+    querystring_dict = QueryDict('', mutable=True)
+    querystring_dict['_return_url'] = request.path
+
+    for key in kwargs:
+        QUERYSTRING_PREFIX = 'querystring_'
+        if key.startswith(QUERYSTRING_PREFIX):
+            querystring_dict[key[len(QUERYSTRING_PREFIX):]] = kwargs.get(key)
+    querystring = querystring_dict.urlencode()
+
+    return mark_safe(
+        '<a href="%s%s" class="admin-link">%s</a>' % (
+            reverse(
+                '%s:%s_%s_%s' % (
+                    admin_namespace,
+                    model._meta.app_label,
+                    model._meta.module_name,
+                    link_type,
+                ),
+                args=kwargs.pop('reverse_args', ()),
+                kwargs=kwargs.pop('reverse_kwargs', {}),
+            ),
+            ('?%s' % querystring) if querystring else '',
+            link_text,
+        )
+    )
+
+
+@register.simple_tag(takes_context=True)
+def add_link(context, model_string, **kwargs):
+    model = get_model(*model_string.split('.'))
+    if model is None:
+        if settings.DEBUG:
+            raise ImproperlyConfigured(
+                '{%% add_link "%s" %%} -- model cannot be found' % (
+                    model_string,
+                )
+            )
+        else:
+            return ''
+
+    defaults = {
+        'link_text': 'Add <verbose_name>',
+        'model': model,
+    }
+    defaults.update(**kwargs)
+    return _admin_link('add_link', 'add', context, **defaults)
+
+
+@register.simple_tag(takes_context=True)
+def change_link(context, obj, **kwargs):
+    defaults = {
+        'link_text': 'Edit this <verbose_name>',
+        'model': obj.__class__,
+        'reverse_args': (obj.pk,),
+    }
+    defaults.update(**kwargs)
+    return _admin_link('change_link', 'change', context, **defaults)
+
+
+@register.assignment_tag(takes_context=True)
+def get_add_link(context, model_string, **kwargs):
+    """ {% get_add_link 'myapp.Model' as add_link %} {% if add_link %} ...  """
+    return add_link(context, model_string, **kwargs)
+
+
+@register.assignment_tag(takes_context=True)
+def get_change_link(context, obj, **kwargs):
+    """ {% get_change_link obj as change_link %} {% if change_link %} ...  """
+    return change_link(context, obj, **kwargs)
+
+
+@register.inclusion_tag('generic/_js_static_urls.html')
+def js_static_urls(*args):
+    return {'urls': args}
+
+
+@register.simple_tag(takes_context=True)
+def absolute_url(context, resolvable, scheme='http', domain=None):
+    if not domain:
+        if 'request' in context:
+            domain = get_current_site(context['request']).domain
+        elif hasattr(settings, 'SITE_DOMAIN'):
+            domain = settings.SITE_DOMAIN
+        else:
+            raise RuntimeError(
+                "{% absolute_url %} unable to determine domain"
+            )
+
+    return '{0}{1}//{2}{3}'.format(
+        scheme,
+        ':' if scheme else '',
+        domain,
+        resolve_url(resolvable),
+    )
+
+
+@register.filter
+def file_exists(field_file):
+    """
+    Shortcut for ensuring FileField values actually exist.
+    E.g.
+
+      {% if instance.file_field|file_exists %}
+        {{ instance.file_field.size|filesizeformat }}
+        {# (accessing .size would otherwise raise an exception) #}
+      {% else %}
+        File missing!
+      {% endif %}
+
+    """
+    try:
+        return bool(field_file and field_file.storage.exists(field_file.name))
+    except Exception:
+        if settings.DEBUG:
+            raise
+        else:
+            return None

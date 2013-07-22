@@ -1,0 +1,2 @@
+class RedirectInstead(Exception):
+    pass
