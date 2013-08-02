@@ -364,6 +364,7 @@ def _admin_link(tag_name, link_type, context, **kwargs):
         return ''
 
     model = kwargs.get('model')
+    instance = kwargs.get('instance', None)
 
     # TODO: consider trying to lookup AdminSite._registry and checking
     # permissions on ModelAdmin itself -- but how to find the non-standard
@@ -382,7 +383,7 @@ def _admin_link(tag_name, link_type, context, **kwargs):
     link_text = kwargs.pop('link_text').replace(
         '<verbose_name>',
         unicode(model._meta.verbose_name)
-    )
+    ).replace('<instance_unicode>', unicode(instance))
 
     querystring_dict = QueryDict('', mutable=True)
     querystring_dict['_return_url'] = request.path
@@ -438,6 +439,7 @@ def change_link(context, obj, **kwargs):
         'link_text': 'Edit this <verbose_name>',
         'model': obj.__class__,
         'reverse_args': (obj.pk,),
+        'instance': obj,
     }
     defaults.update(**kwargs)
     return _admin_link('change_link', 'change', context, **defaults)
