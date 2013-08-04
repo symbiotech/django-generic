@@ -28,7 +28,7 @@
             }
 
             window.remove_cooked_item = function(){
-                var li = $(event.target).parent();
+                var li = $(this).parent();
                 var id_to_remove = $(li).attr('data-id'); // jQuery only 1.4.2
                 var container = $(li).closest('div');
                 var field = $('.CookedIdField', container);
