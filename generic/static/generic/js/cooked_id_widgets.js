@@ -19,7 +19,7 @@
                         cooked.html('');
                         $.each(data, function(key, name){
                         $('<li data-id="'+key+'"></li>').text(name).append(
-                            ' <a onclick="remove_cooked_item();"' +
+                            ' <a onclick="remove_cooked_item(this);"' +
                             ' title="remove">&nbsp;</a>'
                         ).appendTo(cooked);
                         });
@@ -27,8 +27,8 @@
                 }
             }
 
-            window.remove_cooked_item = function(){
-                var li = $(this).parent();
+            window.remove_cooked_item = function(remove_link){
+                var li = $(remove_link).parent();
                 var id_to_remove = $(li).attr('data-id'); // jQuery only 1.4.2
                 var container = $(li).closest('div');
                 var field = $('.CookedIdField', container);
@@ -39,6 +39,7 @@
                     ).join(',')
                 );
                 update_cooked_field(field);
+                $(li).remove();
             }
 
             var originalDismissRelated = window.dismissRelatedLookupPopup;
