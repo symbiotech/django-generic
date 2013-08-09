@@ -16,7 +16,7 @@ class OWRTInlineForm(forms.ModelForm):
     def save(self, commit=True):
         self.instance._order = self.cleaned_data.get(
             '_order', self.instance._order)
-        super(OWRTInlineForm, self).save(commit=commit)
+        return super(OWRTInlineForm, self).save(commit=commit)
 
 
 class OWRTInline(admin.TabularInline):
