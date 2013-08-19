@@ -1,7 +1,11 @@
 import datetime
 
-from django.contrib.auth.models import User
+from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
+
+user_model = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
+
 
 class DelibleManager(models.Manager):
     """
@@ -27,7 +31,7 @@ class Delible(models.Model):
     """
     deleted = models.DateTimeField(null=True, editable=False)
     deleted_by = models.ForeignKey(
-        User, null=True, related_name='+', editable=False)
+        user_model, null=True, related_name='+', editable=False)
 
     is_delible = True
 

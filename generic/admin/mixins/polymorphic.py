@@ -5,6 +5,16 @@ from django.contrib.admin.filters import SimpleListFilter
 from django.db.models import loading
 from django.utils.translation import ugettext_lazy as _
 
+try:
+    # Prevent deprecation warnings on Django >= 1.4
+    from django.conf.urls import patterns, url
+except ImportError:
+    # For compatibility with Django <= 1.3
+    from django.conf.urls.defaults import patterns, url
+
+from ...utils.inheritance import get_subclasses
+
+
 def get_subclass_choices(parent_model):
     title_if_lower = lambda s: (s.title() if s == s.lower() else s)
     return sorted(
@@ -129,3 +139,20 @@ class PolymorphicAdmin(admin.ModelAdmin):
 
     def queryset(self, request):
         return self.model.objects.select_subclasses()
+
+    def get_urls(self, *args, **kwargs):
+        """
+        To make sure that save and continue editing works when adding new
+        Polymorphic models, add a url pattern that matches the subclass model
+        name. A reverse lookup on this name will still return the change view
+        for the parent model, since its URL will be matched first.
+        """
+        urls = super(PolymorphicAdmin, self).get_urls(*args, **kwargs)
+        for subclass in get_subclasses(self.model):
+            info = subclass._meta.app_label, subclass._meta.module_name
+            urls += patterns('',
+                url(r'^(.+)/$',
+                    lambda *a, **k: None, # This never gets called
+                    name='%s_%s_change' % info),
+            )
+        return urls
