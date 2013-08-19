@@ -3,9 +3,7 @@ from django import http
 from django.conf.urls import patterns, url
 from django.contrib import admin
 from django.contrib.admin.filters import SimpleListFilter
-from django.core.urlresolvers import reverse_lazy
-from django.db.models import loading, Model
-from django.http import HttpResponseRedirect
+from django.db.models import loading
 from django.utils.translation import ugettext_lazy as _
 
 from ...utils.inheritance import get_subclasses
@@ -147,7 +145,7 @@ class PolymorphicAdmin(admin.ModelAdmin):
             info = subclass._meta.app_label, subclass._meta.module_name
             urls += patterns('',
                 url(r'^(.+)/$',
-                    wrap(self.change_view),
+                    lambda *a, **k: None, # This never gets called
                     name='%s_%s_change' % info),
             )
         return urls

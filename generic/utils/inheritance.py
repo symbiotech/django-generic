@@ -1,3 +1,5 @@
+from operator import add
+
 def _get_subclasses(klass):
     return (klass,) + reduce(add, map(_get_subclasses, klass.__subclasses__()), ())
 
