@@ -1,6 +1,5 @@
 from django import http
 from django.conf import settings
-from django.conf.urls import url
 from django.contrib import messages
 from django.contrib.auth import logout as auth_logout
 from django.contrib.contenttypes.models import ContentType
