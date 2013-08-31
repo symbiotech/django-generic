@@ -51,15 +51,13 @@ def unbreakable(string):
 HTML_COMMENTS = re.compile(r'<!--.*?-->', re.DOTALL)
 @register.filter
 @stringfilter
-def unescape(text):
+def unescape(text, include_angle_brackets=True):
     """
     Renders plain versions of HTML text - useful for supplying HTML into
     plain text contexts.
     """
     ENTITIES = {
         'amp': '&',
-        'lt': '<',
-        'gt': '>',
         'quot': '"',
         '#39': "'",
         'nbsp': ' ',
@@ -71,7 +69,10 @@ def unescape(text):
         'ldquo': '"',
         'middot': '*',
         'hellip': '...',
-        }
+    }
+    if include_angle_brackets:
+        ENTITIES['lt'] = '<'
+        ENTITIES['gt'] = '>'
     text = HTML_COMMENTS.sub('', text)
     return re.sub(
         '&(%s);' % '|'.join(ENTITIES),
@@ -85,6 +86,12 @@ VERTICAL_WHITESPACE = re.compile(r'\s*\n\s*', re.DOTALL)
 def html_to_text(html):
     html = LINE_BREAKS.sub('\n', html)
     return VERTICAL_WHITESPACE.sub('\n\n', strip_tags(unescape(html))).strip()
+
+
+@register.filter
+@stringfilter
+def unescape_except_angle_brackets(text):
+    return unescape(text, include_angle_brackets=False)
 
 
 def _get_admin_url(obj, view='change', admin_site_name='admin'):
