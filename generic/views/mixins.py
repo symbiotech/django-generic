@@ -4,7 +4,10 @@ import django.views.generic
 from django import http
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.shortcuts import resolve_url
+try:
+    from django.shortcuts import resolve_url
+except ImportError:
+    from generic.utils.future import resolve_url
 from django.utils.decorators import method_decorator
 
 from .exceptions import RedirectInstead
