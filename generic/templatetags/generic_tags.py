@@ -51,15 +51,13 @@ def unbreakable(string):
 HTML_COMMENTS = re.compile(r'<!--.*?-->', re.DOTALL)
 @register.filter
 @stringfilter
-def unescape(text):
+def unescape(text, include_angle_brackets=True):
     """
     Renders plain versions of HTML text - useful for supplying HTML into
     plain text contexts.
     """
     ENTITIES = {
         'amp': '&',
-        'lt': '<',
-        'gt': '>',
         'quot': '"',
         '#39': "'",
         'nbsp': ' ',
@@ -71,7 +69,10 @@ def unescape(text):
         'ldquo': '"',
         'middot': '*',
         'hellip': '...',
-        }
+    }
+    if include_angle_brackets:
+        ENTITIES['lt'] = '<'
+        ENTITIES['gt'] = '>'
     text = HTML_COMMENTS.sub('', text)
     return re.sub(
         '&(%s);' % '|'.join(ENTITIES),
@@ -85,6 +86,12 @@ VERTICAL_WHITESPACE = re.compile(r'\s*\n\s*', re.DOTALL)
 def html_to_text(html):
     html = LINE_BREAKS.sub('\n', html)
     return VERTICAL_WHITESPACE.sub('\n\n', strip_tags(unescape(html))).strip()
+
+
+@register.filter
+@stringfilter
+def unescape_except_angle_brackets(text):
+    return unescape(text, include_angle_brackets=False)
 
 
 def _get_admin_url(obj, view='change', admin_site_name='admin'):
@@ -344,39 +351,45 @@ class MarkCurrentLinksNode(template.Node):
 
 
 def _admin_link(tag_name, link_type, context, **kwargs):
-    try:
-        request = context['request']
-    except KeyError:
-        if settings.DEBUG:
-            raise ImproperlyConfigured(
-                '{%% %s %%} requires the request to be accessible '
-                'within the template context; perhaps install '
-                'django.core.context_processors.request?' % tag_name
-            )
-        else:
-            return ''
-
-    if (
-        not hasattr(request, 'user') or
-        not request.user.is_authenticated() or
-        not request.user.is_staff
-    ):
-        return ''
-
     model = kwargs.get('model')
     instance = kwargs.get('instance', None)
 
-    # TODO: consider trying to lookup AdminSite._registry and checking
-    # permissions on ModelAdmin itself -- but how to find the non-standard
-    # admin site objects? Registered via admin?
-    if not request.user.has_perm(
-        '%s.%s_%s' % (
-            model._meta.app_label,
-            link_type,
-            model._meta.module_name,
-        )
-    ):
-        return ''
+    if kwargs.get('assume_permission', False):
+        # let them through and render a link regardless of context perms
+        return_url = None
+    else:
+        try:
+            request = context['request']
+        except KeyError:
+            if settings.DEBUG:
+                raise ImproperlyConfigured(
+                    '{%% %s %%} requires the request to be accessible '
+                    'within the template context; perhaps install '
+                    'django.core.context_processors.request, '
+                    'or pass "assume_permission=True" ?' % tag_name
+                )
+            else:
+                return ''
+
+        if (
+            not hasattr(request, 'user') or
+            not request.user.is_authenticated() or
+            not request.user.is_staff
+        ):
+            return ''
+
+        # TODO: consider trying to lookup AdminSite._registry and checking
+        # permissions on ModelAdmin itself -- but how to find the non-standard
+        # admin site objects? Registered via admin?
+        if not request.user.has_perm(
+            '%s.%s_%s' % (
+                model._meta.app_label,
+                link_type,
+                model._meta.module_name,
+            )
+        ):
+            return ''
+        return_url = request.path
 
     admin_namespace = kwargs.pop('admin_namespace', 'admin')
     # TODO: i18n
@@ -386,7 +399,8 @@ def _admin_link(tag_name, link_type, context, **kwargs):
     ).replace('<instance_unicode>', unicode(instance))
 
     querystring_dict = QueryDict('', mutable=True)
-    querystring_dict['_return_url'] = request.path
+    if return_url:
+        querystring_dict['_return_url'] = return_url
 
     for key in kwargs:
         QUERYSTRING_PREFIX = 'querystring_'
@@ -394,19 +408,26 @@ def _admin_link(tag_name, link_type, context, **kwargs):
             querystring_dict[key[len(QUERYSTRING_PREFIX):]] = kwargs.get(key)
     querystring = querystring_dict.urlencode()
 
-    return mark_safe(
-        '<a href="%s%s" class="admin-link">%s</a>' % (
-            reverse(
-                '%s:%s_%s_%s' % (
-                    admin_namespace,
-                    model._meta.app_label,
-                    model._meta.module_name,
-                    link_type,
-                ),
-                args=kwargs.pop('reverse_args', ()),
-                kwargs=kwargs.pop('reverse_kwargs', {}),
+    url = '%s%s' % (
+        reverse(
+            '%s:%s_%s_%s' % (
+                admin_namespace,
+                model._meta.app_label,
+                model._meta.module_name,
+                link_type,
             ),
-            ('?%s' % querystring) if querystring else '',
+            args=kwargs.pop('reverse_args', ()),
+            kwargs=kwargs.pop('reverse_kwargs', {}),
+        ),
+        ('?%s' % querystring) if querystring else '',
+    )
+
+    if kwargs.get('url_only', False):
+        return url
+
+    return mark_safe(
+        '<a href="%s" class="admin-link">%s</a>' % (
+            url,
             link_text,
         )
     )
