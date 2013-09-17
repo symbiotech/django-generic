@@ -19,7 +19,7 @@
         <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
       <![endif]-->
   {% endblock %}</head>
-  <body class="{% block body_class %}{% endblock %}">
+  <body{% block body_attributes %} class="{% block body_class %}{% endblock %}"{% endblock %}>
     {% block body %}
       <div id="container">
         <header>
