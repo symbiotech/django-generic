@@ -189,9 +189,10 @@ class BatchUpdateAdmin(admin.ModelAdmin):
                 'has_change_permission': self.has_change_permission(request),
                 'count': len(queryset),
                 'media': self.media + helpers.AdminForm(
-                    form, list(self.get_fieldsets(request)),
-                    self.get_prepopulated_fields(request),
-                    self.get_readonly_fields(request),
+                    form, 
+                    (), #list(self.get_fieldsets(request)),
+                    {}, #self.get_prepopulated_fields(request),
+                    (), #self.get_readonly_fields(request),
                     model_admin=self
                 ).media,
             },
