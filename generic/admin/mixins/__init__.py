@@ -5,6 +5,12 @@ from .delible import DelibleAdmin
 from .owrt import OWRTInline, OWRTStackedInline
 from .related import ChangeFormOnlyAdmin, ChangeLinkInline
 from .return_url import ReturnURLAdminMixin
+from .rich_text import (
+    RichTextModelAdmin,
+    RichTextStackedInline,
+    RichTextTabularInline,
+)
+
 from .thumbnail import ThumbnailAdminMixin
 
 try:
