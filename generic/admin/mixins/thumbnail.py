@@ -32,7 +32,10 @@ class ThumbnailAdminMixin(object):
         if source:
             from easy_thumbnails.files import get_thumbnailer
             thumbnailer = get_thumbnailer(source)
-            thumbnail = thumbnailer.get_thumbnail(self.thumbnail_options)
+            try:
+                thumbnail = thumbnailer.get_thumbnail(self.thumbnail_options)
+            except Exception:
+                return ''
             return '<img class="thumbnail" src="{0}" />'.format(thumbnail.url)
         else:
             return ''
