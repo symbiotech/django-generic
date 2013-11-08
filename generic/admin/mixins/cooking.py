@@ -32,7 +32,17 @@ class CookedIdAdmin(admin.ModelAdmin):
         """
         Override this to customise the "cooked" representation of objects
         """
-        return unicode(obj)
+        if hasattr(obj, 'get_absolute_url'):
+            can_view = hasattr(obj, 'get_absolute_url')
+        else:
+            can_view = False
+			
+        result = {'text': unicode(obj),
+                  'can_edit': request.user.has_perm('.'.join((obj._meta.app_label, obj._meta.db_table))),
+                  'can_view': can_view,
+                  'base_url': '/admin/%s/%s/' % (obj._meta.app_label, obj.__class__.__name__.lower())
+                  }
+        return result
 
     def cook_ids(self, request, field_name, raw_ids):
         # TODO: extend to support non-integer/non-`id` PKs

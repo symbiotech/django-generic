@@ -17,8 +17,8 @@ class ForeignKeyCookedIdWidget(ForeignKeyRawIdWidget):
         return mark_safe('<ul class="cooked-data"></ul>' + output)
 
     class Media:
-        js = ('generic/js/cooked_id_widgets.js',)
-        css = {'all': ('generic/css/cooked_ids.css',)}
+        js = ('generic/js/cooked_id_widgets.js', 'generic/js/jquery.contextMenu.js')
+        css = {'all': ('generic/css/cooked_ids.css', 'generic/css/jquery.contextMenu.css')}
 
 
 class ManyToManyCookedIdWidget(ForeignKeyCookedIdWidget,
