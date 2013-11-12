@@ -66,38 +66,23 @@ class BatchUpdateForm(forms.ModelForm):
         updated = 0
         for field_name in self.fields_to_update:
 
-<<<<<<< HEAD
             if field_name.startswith(M2M_REMOVE_PREFIX):
                 model_field_name = field_name[len(M2M_REMOVE_PREFIX):]
             elif field_name.startswith(M2M_ADD_PREFIX):
                 model_field_name = field_name[len(M2M_ADD_PREFIX):]
-=======
-            if 'm2m_remove_' in field_name:
-                model_field_name = field_name[11:]
-            elif 'm2m_add_' in field_name:
-                model_field_name = field_name[8:]
->>>>>>> 66b2a234e99ca4206c5fb71f4f3c35c68a7bfd1e
             else:
                 model_field_name = field_name
 
             field = queryset.model._meta.get_field(model_field_name)
             if isinstance(field, models.ManyToManyField):
 
-<<<<<<< HEAD
                 if field_name.startswith(M2M_REMOVE_PREFIX):
-=======
-                if 'm2m_remove_' in field_name:
->>>>>>> 66b2a234e99ca4206c5fb71f4f3c35c68a7bfd1e
                     for obj in queryset.all():
                         for related_obj in self.cleaned_data[field_name]:
                             getattr(obj, model_field_name).remove(related_obj)
                         updated += 1
 
-<<<<<<< HEAD
                 if field_name.startswith(M2M_ADD_PREFIX):
-=======
-                if 'm2m_add_' in field_name:
->>>>>>> 66b2a234e99ca4206c5fb71f4f3c35c68a7bfd1e
                     for obj in queryset.all():
                         for related_obj in self.cleaned_data[field_name]:
                             getattr(obj, model_field_name).add(related_obj)
@@ -116,17 +101,10 @@ class BatchUpdateForm(forms.ModelForm):
         new_list = []
         for field_name in self.fields_to_update:
             model_field_name = field_name
-<<<<<<< HEAD
             if field_name.startswith(M2M_REMOVE_PREFIX):
                 model_field_name = field_name[len(M2M_REMOVE_PREFIX):]
             elif field_name.startswith(M2M_ADD_PREFIX):
                 model_field_name = field_name[len(M2M_ADD_PREFIX):]
-=======
-            if 'm2m_remove_' in field_name:
-                model_field_name = field_name[11:]
-            elif 'm2m_add_' in field_name:
-                model_field_name = field_name[8:]
->>>>>>> 66b2a234e99ca4206c5fb71f4f3c35c68a7bfd1e
             if not model_field_name in new_list:
                 new_list.append(model_field_name)
         self.fields_to_update = new_list
@@ -211,16 +189,10 @@ class BatchUpdateAdmin(admin.ModelAdmin):
                 'has_change_permission': self.has_change_permission(request),
                 'count': len(queryset),
                 'media': self.media + helpers.AdminForm(
-<<<<<<< HEAD
-                    form, 
+                    form,
                     (), #list(self.get_fieldsets(request)),
                     {}, #self.get_prepopulated_fields(request),
                     (), #self.get_readonly_fields(request),
-=======
-                    form, list(self.get_fieldsets(request)),
-                    self.get_prepopulated_fields(request),
-                    self.get_readonly_fields(request),
->>>>>>> 66b2a234e99ca4206c5fb71f4f3c35c68a7bfd1e
                     model_admin=self
                 ).media,
             },
