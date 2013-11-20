@@ -23,20 +23,20 @@
                             ' title="remove">&nbsp;</a>'
                         ).appendTo(cooked);
                         
-                        if(data['can_view'] || data['can_edit'])
+                        if(data['view_url'] || data['edit_url'])
                         {
 							var options = {};
-							if(data['can_view'])
+							if(data['view_url'])
 							{
 									options['View'] = {click: function(element) {  
-											window.location.href = data['can_view'];
+											window.location.href = data['view_url'];
 										}
 									}
 							}
-							if(data['can_edit'])
+							if(data['edit_url'])
 							{
 									options['Edit'] = {click: function(element) {  
-											window.location.href = data['base_url'] + key + '/';
+											window.location.href = data['base_url'];
 										}
 									}
 							}

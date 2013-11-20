@@ -2,6 +2,7 @@ from django import http
 from django.conf import settings
 from django.contrib import admin
 from django.core.exceptions import ImproperlyConfigured
+from django.core.urlresolvers import reverse
 from ..widgets import ForeignKeyCookedIdWidget, ManyToManyCookedIdWidget
 
 try:
@@ -32,15 +33,17 @@ class CookedIdAdmin(admin.ModelAdmin):
         """
         Override this to customise the "cooked" representation of objects
         """
+        view_url = ''
+        edit_url = ''
+        
         if hasattr(obj, 'get_absolute_url'):
-            can_view = hasattr(obj, 'get_absolute_url')
-        else:
-            can_view = False
-			
+            view_url = obj.get_absolute_url();
+        if request.user.has_perm('%s.change_%s' %(obj._meta.app_label, obj._meta.module_name)):
+			edit_url = reverse('admin:%s_%s_change' %(obj._meta.app_label,  obj._meta.module_name),  args=[obj.id])
+		
         result = {'text': unicode(obj),
-                  'can_edit': request.user.has_perm('.'.join((obj._meta.app_label, obj._meta.db_table))),
-                  'can_view': can_view,
-                  'base_url': '/admin/%s/%s/' % (obj._meta.app_label, obj.__class__.__name__.lower())
+                  'view_url': view_url,
+                  'edit_url': edit_url
                   }
         return result
 
