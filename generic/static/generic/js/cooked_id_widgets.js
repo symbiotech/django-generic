@@ -36,7 +36,7 @@
 							if(data['edit_url'])
 							{
 									options['Edit'] = {click: function(element) {  
-											window.location.href = data['base_url'];
+											window.location.href = data['edit_url'];
 										}
 									}
 							}
