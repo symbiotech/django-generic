@@ -4,13 +4,13 @@
       {% for message in messages %}
         <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
           {% if 'success' in message.tags %}
-            <i class="icon-ok-sign"></i>
+            <i class="fa fa-check-circle"></i>
           {% elif 'error' in message.tags %}
-            <i class="icon-exclamation-sign"></i>
+            <i class="fa fa-exclamation-circle"></i>
           {% elif 'warning' in message.tags %}
-            <i class="icon-warning-sign"></i>
+            <i class="fa fa-warning"></i>
           {% elif 'info' in message.tags %}
-            <i class="icon-info-sign"></i>
+            <i class="fa fa-info-circle"></i>
           {% endif %}
           {{ message|safe }}
         </li>
