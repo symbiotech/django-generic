@@ -14,15 +14,15 @@ class DelibleManager(models.Manager):
 
     use_for_related_fields = True
 
-    def get_query_set(self):
-        return super(DelibleManager, self).get_query_set().filter(deleted=None)
+    def get_queryset(self):
+        return super(DelibleManager, self).get_queryset().filter(deleted=None)
 
     def deleted(self):
-        return super(DelibleManager, self).get_query_set().exclude(
+        return super(DelibleManager, self).get_queryset().exclude(
             deleted=None)
 
     def all_with_deleted(self):
-        return super(DelibleManager, self).get_query_set()
+        return super(DelibleManager, self).get_queryset()
 
 
 class Delible(models.Model):
