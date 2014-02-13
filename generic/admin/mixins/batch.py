@@ -26,20 +26,20 @@ class BatchUpdateForm(forms.ModelForm):
             model_field = self._meta.model._meta.get_field(field_name)
             if isinstance(model_field, models.ManyToManyField):
 
-                self.fields['%s%s'%(M2M_REMOVE_PREFIX, field_name,)] = copy(self.fields[field_name])
-                self.fields['%s%s'%(M2M_REMOVE_PREFIX, field_name,)].label = _("Remove %s"%(field_name,))
-                self.fields['%s%s'%(M2M_REMOVE_PREFIX, field_name,)].update_checkbox = BoundField(
+                self.fields['%s%s'%(self.M2M_REMOVE_PREFIX, field_name,)] = copy(self.fields[field_name])
+                self.fields['%s%s'%(self.M2M_REMOVE_PREFIX, field_name,)].label = _("Remove %s"%(field_name,))
+                self.fields['%s%s'%(self.M2M_REMOVE_PREFIX, field_name,)].update_checkbox = BoundField(
                     self,
                     forms.BooleanField(required=False),
-                    'updating-%s%s'%(M2M_REMOVE_PREFIX, field_name,)
+                    'updating-%s%s'%(self.M2M_REMOVE_PREFIX, field_name,)
                 )
 
-                self.fields['%s%s'%(M2M_ADD_PREFIX, field_name,)] = copy(self.fields[field_name])
-                self.fields['%s%s'%(M2M_ADD_PREFIX, field_name,)].label = _("Add %s"%(field_name,))
-                self.fields['%s%s'%(M2M_ADD_PREFIX, field_name,)].update_checkbox = BoundField(
+                self.fields['%s%s'%(self.M2M_ADD_PREFIX, field_name,)] = copy(self.fields[field_name])
+                self.fields['%s%s'%(self.M2M_ADD_PREFIX, field_name,)].label = _("Add %s"%(field_name,))
+                self.fields['%s%s'%(self.M2M_ADD_PREFIX, field_name,)].update_checkbox = BoundField(
                     self,
                     forms.BooleanField(required=False),
-                    'updating-%s%s'%(M2M_ADD_PREFIX, field_name,)
+                    'updating-%s%s'%(self.M2M_ADD_PREFIX, field_name,)
                 )
 
                 self.fields.pop(field_name)
@@ -66,23 +66,23 @@ class BatchUpdateForm(forms.ModelForm):
         updated = 0
         for field_name in self.fields_to_update:
 
-            if field_name.startswith(M2M_REMOVE_PREFIX):
-                model_field_name = field_name[len(M2M_REMOVE_PREFIX):]
-            elif field_name.startswith(M2M_ADD_PREFIX):
-                model_field_name = field_name[len(M2M_ADD_PREFIX):]
+            if field_name.startswith(self.M2M_REMOVE_PREFIX):
+                model_field_name = field_name[len(self.M2M_REMOVE_PREFIX):]
+            elif field_name.startswith(self.M2M_ADD_PREFIX):
+                model_field_name = field_name[len(self.M2M_ADD_PREFIX):]
             else:
                 model_field_name = field_name
 
             field = queryset.model._meta.get_field(model_field_name)
             if isinstance(field, models.ManyToManyField):
 
-                if field_name.startswith(M2M_REMOVE_PREFIX):
+                if field_name.startswith(self.M2M_REMOVE_PREFIX):
                     for obj in queryset.all():
                         for related_obj in self.cleaned_data[field_name]:
                             getattr(obj, model_field_name).remove(related_obj)
                         updated += 1
 
-                if field_name.startswith(M2M_ADD_PREFIX):
+                if field_name.startswith(self.M2M_ADD_PREFIX):
                     for obj in queryset.all():
                         for related_obj in self.cleaned_data[field_name]:
                             getattr(obj, model_field_name).add(related_obj)
@@ -101,10 +101,10 @@ class BatchUpdateForm(forms.ModelForm):
         new_list = []
         for field_name in self.fields_to_update:
             model_field_name = field_name
-            if field_name.startswith(M2M_REMOVE_PREFIX):
-                model_field_name = field_name[len(M2M_REMOVE_PREFIX):]
-            elif field_name.startswith(M2M_ADD_PREFIX):
-                model_field_name = field_name[len(M2M_ADD_PREFIX):]
+            if field_name.startswith(self.M2M_REMOVE_PREFIX):
+                model_field_name = field_name[len(self.M2M_REMOVE_PREFIX):]
+            elif field_name.startswith(self.M2M_ADD_PREFIX):
+                model_field_name = field_name[len(self.M2M_ADD_PREFIX):]
             if not model_field_name in new_list:
                 new_list.append(model_field_name)
         self.fields_to_update = new_list
@@ -189,7 +189,7 @@ class BatchUpdateAdmin(admin.ModelAdmin):
                 'has_change_permission': self.has_change_permission(request),
                 'count': len(queryset),
                 'media': self.media + helpers.AdminForm(
-                    form, 
+                    form,
                     (), #list(self.get_fieldsets(request)),
                     {}, #self.get_prepopulated_fields(request),
                     (), #self.get_readonly_fields(request),

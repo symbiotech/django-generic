@@ -14,14 +14,36 @@
                     var url_base = window.cooked_id_url_base || '../';
                     var cook_url =
                         url_base + 'cook-ids/' + field_name + '/' + ids + '/';
-                    $.get(cook_url, function(data){
+                    $.get(cook_url, function(response){
                         var cooked = $('.cooked-data', container);
                         cooked.html('');
-                        $.each(data, function(key, name){
-                        $('<li data-id="'+key+'"></li>').text(name).append(
+                        $.each(response, function(key, data){
+                        $('<li data-id="'+key+'"></li>').text(data['text']).append(
                             ' <a onclick="remove_cooked_item(this);"' +
                             ' title="remove">&nbsp;</a>'
                         ).appendTo(cooked);
+                        
+                        if(data['can_view'] || data['can_edit'])
+                        {
+							var options = {};
+							if(data['can_view'])
+							{
+									options['View'] = {click: function(element) {  
+											window.location.href = data['can_view'];
+										}
+									}
+							}
+							if(data['can_edit'])
+							{
+									options['Edit'] = {click: function(element) {  
+											window.location.href = data['base_url'] + key + '/';
+										}
+									}
+							}
+							
+							$('li[data-id='+key+']').contextMenu('context-menu-'+key, options);
+						}                        
+                        
                         });
                     });
                 }

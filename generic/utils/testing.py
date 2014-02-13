@@ -236,7 +236,7 @@ class TestCase(django.test.TestCase):
         if message is None:
             message = mail.outbox[-1]
         matches = re.findall(
-            r'(?P<scheme>\w*:?//)(?P<domain>[\w\-\.]+)(?P<path>\S+)',
+            r'(?P<scheme>\w*:?//)(?P<domain>[\w\-\.:]+)(?P<path>\S+)',
             message.body,
         )
         if path_only:
