@@ -2,11 +2,32 @@
 
 from django import http
 from django.conf import settings
+from django.core.urlresolvers import get_callable
+
+def default_test(request, view_func, view_args, view_kwargs):
+    """
+    Callable that determines whether SSL should be used.
+
+    Default is the presence of 'SSL' in the view kwargs.
+
+    Override via settings.SSL_REDIRECT_CALLABLE with a dotted path to a
+    callable.
+    """
+    secure_default = getattr(settings, 'SSL_DEFAULT', False)
+    return view_kwargs.pop('SSL', secure_default)
+
+
+use_ssl = get_callable(
+    getattr(
+        settings,
+        'SSL_REDIRECT_CALLABLE',
+        'generic.middleware.ssl_redirect.default_test'
+    )
+)
 
 class SSLRedirect:
     def process_view(self, request, view_func, view_args, view_kwargs):
-        secure_default = getattr(settings, 'SSL_DEFAULT', False)
-        secure = view_kwargs.pop('SSL', secure_default)
+        secure = use_ssl(request, view_func, view_args, view_kwargs)
         if not secure == request.is_secure():
             if getattr(settings, 'SSL_REDIRECTS_ACTIVE', False):
                 return self._redirect(request, secure)

@@ -1,8 +1,12 @@
+try:
+    import json
+except ImportError:
+    from django.utils import simplejson as json
+
 from functools import wraps
 from django.conf import settings
 from django.core.cache import cache, get_cache
 from django.http import HttpResponse
-from django.utils import simplejson
 
 import logging
 logger = logging.getLogger(__name__)
@@ -103,9 +107,9 @@ def json_view(view):
             else:
                 return response_data
         try:
-            json = simplejson.dumps(response_data)
+            json_data = json.dumps(response_data)
         except TypeError:
-            json = simplejson.dumps(
+            json_data = json.dumps(
                 {'result': False, 'reason': 'Error encoding JSON response'})
-        return HttpResponse(json, mimetype='application/json')
+        return HttpResponse(json_data, mimetype='application/json')
     return wrapped_view

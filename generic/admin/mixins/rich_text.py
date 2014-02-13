@@ -8,9 +8,11 @@ def make_rich(base):
         rich_fields = ()
 
         class Media(BaseMedia):
-            js = tuple(getattr(BaseMedia, 'js', ())) + (
-                getattr(settings, 'TINYMCE_JS_URL', None),
-                 getattr(settings, 'TINYMCE_JS_INIT_URL', None),
+            js = tuple(getattr(BaseMedia, 'js', ())) + filter(
+                bool, (
+                    getattr(settings, 'TINYMCE_JS_URL', None),
+                    getattr(settings, 'TINYMCE_JS_INIT_URL', None),
+                )
             )
 
         def formfield_for_dbfield(self, db_field, **kwargs):

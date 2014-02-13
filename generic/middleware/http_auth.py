@@ -40,6 +40,11 @@ def _http_auth_helper(request):
         if request.user.is_authenticated():
             return None
 
+    exemption_callable = getattr(
+        settings, 'HTTP_AUTH_EXEMPTION_CALLABLE', None)
+    if exemption_callable and exemption_callable(request):
+        return None
+
     if request.META.has_key('HTTP_AUTHORIZATION'):
         auth = request.META['HTTP_AUTHORIZATION'].split()
         if len(auth) == 2:

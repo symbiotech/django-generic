@@ -272,7 +272,6 @@ class _VerboseAssertNumQueriesContext(_AssertNumQueriesContext):
 
 #---[ Selenium ]---------------------------------------------------------------
 
-from django.core import mail
 from django.test import LiveServerTestCase
 
 class SeleniumTests(LiveServerTestCase):
@@ -320,8 +319,21 @@ class SeleniumTests(LiveServerTestCase):
         self.assertTrue(needle in haystack)
 
     def fill_field(self, field_name, value):
-        first_name_input = self.driver.find_element_by_name(field_name)
-        first_name_input.send_keys(value)
+        input = self.driver.find_element_by_name(field_name)
+        options = input.find_elements_by_tag_name('option')
+        if options:
+            for option in options:
+                if option.get_attribute('value') == value:
+                    option.click()
+                    return
+            logger.warning(
+                u"Couldn't find select[name={0}] value ({1})".format(
+                    field_name,
+                    value,
+                )
+            )
+        else:
+            input.send_keys(value)
 
     def fill_fields(self, data):
         for field_name, value in data.iteritems():
