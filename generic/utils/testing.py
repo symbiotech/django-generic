@@ -208,7 +208,7 @@ class TestCase(django.test.TestCase):
 
             model_admin = response.context['adminform'].model_admin
 
-            for instance in model_admin.queryset(response.request):
+            for instance in model_admin.get_queryset(response.request):
                 change_url = reverse(
                     'admin:%s_%s_change' % (
                         model._meta.app_label,
