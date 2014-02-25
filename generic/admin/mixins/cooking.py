@@ -1,8 +1,16 @@
 from django import http
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured
-from ..widgets import ForeignKeyCookedIdWidget, ManyToManyCookedIdWidget
+from ..widgets import (
+    ForeignKeyCookedIdWidget,
+    ManyToManyCookedIdWidget,
+    TabularInlineForeignKeyCookedIdWidget,
+    TabularInlineManyToManyCookedIdWidget,
+    StackedInlineForeignKeyCookedIdWidget,
+    StackedInlineManyToManyCookedIdWidget,
+)
 
 try:
     from django.conf.urls import patterns, url
@@ -14,7 +22,7 @@ try:
 except ImportError:
     from django.utils import simplejson as json
 
-class CookedIdAdmin(admin.ModelAdmin):
+class BaseCookedIdAdmin:
     """
     Support for CookedIdWidgets (vs. RawIdWidgets) in admin.
 
@@ -70,13 +78,6 @@ class CookedIdAdmin(admin.ModelAdmin):
         return http.HttpResponse(
             json.dumps(response_data), mimetype='application/json')
 
-    def get_urls(self):
-        return patterns(
-            '',
-            url(r'^cook-ids/(?P<field_name>\w+)/(?P<raw_ids>[\d,]+)/$',
-                self.admin_site.admin_view(self.cook_ids))
-        ) + super(CookedIdAdmin, self).get_urls()
-
     def assert_cooked_target_admin(self, db_field):
         if db_field.rel.to in self.admin_site._registry:
             return True
@@ -93,6 +94,46 @@ class CookedIdAdmin(admin.ModelAdmin):
             else:
                 pass # fail silently
 
+
+class CookedIdAdmin(BaseCookedIdAdmin, admin.ModelAdmin):
+
+    def cook_ids_inline(self, request, model_name, field_name, raw_ids):
+        
+        # find the correct inline instance and pass control to it's own cook_ids()
+        inlines = self.get_inline_instances(request)
+        for inline in inlines:
+            content_type = ContentType.objects.get_for_model(inline.model)
+            if model_name == content_type.model and field_name in inline.cooked_id_fields:
+                # this is our guy
+                return inline.cook_ids(request, field_name, raw_ids)
+
+        raise http.Http404
+
+    def get_urls(self):
+
+        urlpatterns = patterns(
+            '',
+            url(r'^cook-ids/(?P<field_name>\w+)/(?P<raw_ids>[\d,]+)/$',
+                self.admin_site.admin_view(self.cook_ids))
+        )
+
+        # add any inline cooked ID urls...
+
+        for inline in self.inlines:
+            try:
+                if inline.cooked_id_fields:
+                    content_type = ContentType.objects.get_for_model(inline.model)
+                    urlpatterns += patterns(
+                        '',
+                        url(r'^cook-ids-inline/(?P<model_name>'+content_type.model+')/(?P<field_name>\w+)/(?P<raw_ids>[\d,]+)/$',
+                            self.admin_site.admin_view(self.cook_ids_inline))
+                    )
+            except AttributeError:
+                # probably not a TabularInlineCookedIdAdmin
+                pass
+
+        return urlpatterns + super(CookedIdAdmin, self).get_urls()
+
     def formfield_for_manytomany(self, db_field, request=None, **kwargs):
         if db_field.name in self.cooked_id_fields:
             if self.assert_cooked_target_admin(db_field):
@@ -107,4 +148,62 @@ class CookedIdAdmin(admin.ModelAdmin):
                 kwargs['widget'] = ForeignKeyCookedIdWidget(
                     db_field.rel, self.admin_site)
         return super(CookedIdAdmin, self).formfield_for_foreignkey(
+            db_field, request=request, **kwargs)
+
+
+class TabularInlineCookedIdAdmin(BaseCookedIdAdmin, admin.TabularInline):
+
+    content_type = None
+
+    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
+        content_type = ContentType.objects.get_for_model(self.model)
+        if db_field.name in self.cooked_id_fields:
+            if self.assert_cooked_target_admin(db_field):
+                kwargs['widget'] = TabularInlineManyToManyCookedIdWidget(
+                    db_field.rel, self.admin_site, {
+                        'data-model': content_type.model,
+                        'data-field': db_field.name,
+                    })
+        return super(TabularInlineCookedIdAdmin, self).formfield_for_manytomany(
+            db_field, request=request, **kwargs)
+
+    def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
+        content_type = ContentType.objects.get_for_model(self.model)
+        if db_field.name in self.cooked_id_fields:
+            if self.assert_cooked_target_admin(db_field):
+                kwargs['widget'] = TabularInlineForeignKeyCookedIdWidget(
+                    db_field.rel, self.admin_site, {
+                        'data-model': content_type.model,
+                        'data-field': db_field.name,
+                    })
+        return super(TabularInlineCookedIdAdmin, self).formfield_for_foreignkey(
+            db_field, request=request, **kwargs)
+
+
+class StackedInlineCookedIdAdmin(BaseCookedIdAdmin, admin.StackedInline):
+
+    content_type = None
+
+    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
+        content_type = ContentType.objects.get_for_model(self.model)
+        if db_field.name in self.cooked_id_fields:
+            if self.assert_cooked_target_admin(db_field):
+                kwargs['widget'] = StackedInlineManyToManyCookedIdWidget(
+                    db_field.rel, self.admin_site, {
+                        'data-model': content_type.model,
+                        'data-field': db_field.name,
+                    })
+        return super(StackedInlineCookedIdAdmin, self).formfield_for_manytomany(
+            db_field, request=request, **kwargs)
+
+    def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
+        content_type = ContentType.objects.get_for_model(self.model)
+        if db_field.name in self.cooked_id_fields:
+            if self.assert_cooked_target_admin(db_field):
+                kwargs['widget'] = StackedInlineForeignKeyCookedIdWidget(
+                    db_field.rel, self.admin_site, {
+                        'data-model': content_type.model,
+                        'data-field': db_field.name,
+                    })
+        return super(StackedInlineCookedIdAdmin, self).formfield_for_foreignkey(
             db_field, request=request, **kwargs)

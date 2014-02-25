@@ -12,6 +12,7 @@ ul.cooked-data li{
     border: 1px solid #DDD;
     background-color: #FAFAFA;
     padding: 2px 2px 2px 5px;
+    line-height: 20px;
 }
 
 ul.cooked-data li a{

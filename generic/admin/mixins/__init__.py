@@ -1,5 +1,9 @@
 from .batch import BatchUpdateForm, BatchUpdateAdmin
-from .cooking import CookedIdAdmin
+from .cooking import (
+    CookedIdAdmin,
+    TabularInlineCookedIdAdmin,
+    StackedInlineCookedIdAdmin,
+)
 from .csv import CSVExportAdmin
 from .delible import DelibleAdmin
 from .owrt import OWRTInline, OWRTStackedInline
