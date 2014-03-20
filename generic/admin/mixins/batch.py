@@ -13,11 +13,13 @@ from django.template.response import TemplateResponse
 from django.utils.translation import ungettext_lazy, ugettext_lazy as _
 from copy import copy
 
+M2M_REMOVE_PREFIX = 'm2m_remove_'
+M2M_ADD_PREFIX = 'm2m_add_'
+
+
 class BatchUpdateForm(forms.ModelForm):
     
-    M2M_REMOVE_PREFIX = 'm2m_remove_'
-    M2M_ADD_PREFIX = 'm2m_add_'
-    
+
     def __init__(self, *args, **kwargs):
         from django.forms.forms import BoundField
         super(BatchUpdateForm, self).__init__(*args, **kwargs)
@@ -159,6 +161,7 @@ class BatchUpdateAdmin(admin.ModelAdmin):
         form = form_class(request.POST or None)
         if form.is_valid():
             updated = form.apply(request, queryset)
+
             self.message_user(
                 request,
                 ungettext_lazy(
@@ -170,7 +173,7 @@ class BatchUpdateAdmin(admin.ModelAdmin):
                 ) % {
                     'field_list': u', '.join(
                         [
-                            self.model._meta.get_field(name).verbose_name
+                            unicode(self.model._meta.get_field(name).verbose_name)
                             for name in form.fields_to_update
                         ]
                     ),
