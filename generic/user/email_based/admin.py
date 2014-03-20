@@ -1,5 +1,4 @@
 import django.contrib.auth.admin
-from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from . import forms, models
 
