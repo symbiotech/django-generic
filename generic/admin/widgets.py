@@ -26,3 +26,33 @@ class ManyToManyCookedIdWidget(ForeignKeyCookedIdWidget,
     pass
 
 
+class TabularInlineForeignKeyCookedIdWidget(ForeignKeyCookedIdWidget):
+
+    def render(self, name, value, attrs=None):
+        output = super(TabularInlineForeignKeyCookedIdWidget, self).render(
+            name, value, attrs)
+        output = output.replace(
+            'CookedIdField', 'TabularInlineCookedIdField')
+
+        return output
+
+
+class TabularInlineManyToManyCookedIdWidget(TabularInlineForeignKeyCookedIdWidget,
+                                            ManyToManyRawIdWidget):
+    pass
+
+
+class StackedInlineForeignKeyCookedIdWidget(ForeignKeyCookedIdWidget):
+
+    def render(self, name, value, attrs=None):
+        output = super(StackedInlineForeignKeyCookedIdWidget, self).render(
+            name, value, attrs)
+        output = output.replace(
+            'CookedIdField', 'StackedInlineCookedIdField')
+
+        return output
+
+
+class StackedInlineManyToManyCookedIdWidget(StackedInlineForeignKeyCookedIdWidget,
+                                            ManyToManyRawIdWidget):
+    pass
