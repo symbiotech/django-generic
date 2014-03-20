@@ -189,7 +189,7 @@ class TestCase(django.test.TestCase):
 
             changelist_url = reverse(
                 'admin:%s_%s_changelist' % (
-                    model._meta.app_label, model._meta.module_name
+                    model._meta.app_label, model._meta.model_name
                 )
             )
             response = self.client.get(changelist_url)
@@ -199,7 +199,7 @@ class TestCase(django.test.TestCase):
             add_url = reverse(
                 'admin:%s_%s_add' % (
                     model._meta.app_label,
-                    model._meta.module_name
+                    model._meta.model_name
                 )
             )
             response = self.client.get(add_url)
@@ -208,11 +208,11 @@ class TestCase(django.test.TestCase):
 
             model_admin = response.context['adminform'].model_admin
 
-            for instance in model_admin.queryset(response.request):
+            for instance in model_admin.get_queryset(response.request):
                 change_url = reverse(
                     'admin:%s_%s_change' % (
                         model._meta.app_label,
-                        model._meta.module_name,
+                        model._meta.model_name,
                     ),
                     args=(instance.pk,)
                 )
