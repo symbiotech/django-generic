@@ -1,3 +1,4 @@
+import django
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
@@ -37,7 +38,7 @@ class UserChangeForm(forms.ModelForm):
 
     class Meta:
         model = get_user_model()
-        fields = '__all__'
+        fields = '__all__' if django.VERSION >= (1,6) else None
 
     def clean_password(self):
         return self.initial['password']
