@@ -48,35 +48,45 @@ def unbreakable(string):
     return mark_safe(
         string.strip().replace(' ', '&nbsp;').replace('-', '&#8209;'))
 
+
+# from http://hg.python.org/cpython/file/2.7/Lib/HTMLParser.py#l447
+# (the 2.5 version is *far* inferior)
+entitydefs = None
+def htmlparser_unescape(s):
+    if '&' not in s:
+        return s
+    def replaceEntities(s):
+        s = s.groups()[0]
+        try:
+            if s[0] == "#":
+                s = s[1:]
+                if s[0] in ['x','X']:
+                    c = int(s[1:], 16)
+                else:
+                    c = int(s)
+                return unichr(c)
+        except ValueError:
+            return '&#'+s+';'
+        else:
+            import htmlentitydefs
+            entitydefs = {'apos':u"'"}
+            for k, v in htmlentitydefs.name2codepoint.iteritems():
+                entitydefs[k] = unichr(v)
+            try:
+                return entitydefs[s]
+            except KeyError:
+                return '&'+s+';'
+
+    return re.sub(r"&(#?[xX]?(?:[0-9a-fA-F]+|\w{1,8}));", replaceEntities, s)
+
+
 HTML_COMMENTS = re.compile(r'<!--.*?-->', re.DOTALL)
+
 @register.filter
 @stringfilter
-def unescape(text, include_angle_brackets=True):
-    """
-    Renders plain versions of HTML text - useful for supplying HTML into
-    plain text contexts.
-    """
-    ENTITIES = {
-        'amp': '&',
-        'quot': '"',
-        '#39': "'",
-        'nbsp': ' ',
-        'ndash': '-',
-        'mdash': '--',
-        'rsquo': "'",
-        'rdquo': '"',
-        'lsquo': "'",
-        'ldquo': '"',
-        'middot': '*',
-        'hellip': '...',
-    }
-    if include_angle_brackets:
-        ENTITIES['lt'] = '<'
-        ENTITIES['gt'] = '>'
+def unescape(text):
     text = HTML_COMMENTS.sub('', text)
-    return re.sub(
-        '&(%s);' % '|'.join(ENTITIES),
-        lambda match: ENTITIES[match.group(1)], text)
+    return htmlparser_unescape(text)
 
 
 LINE_BREAKS = re.compile(r'(<br\s*/*>)|(</p>)')
@@ -91,7 +101,12 @@ def html_to_text(html):
 @register.filter
 @stringfilter
 def unescape_except_angle_brackets(text):
-    return unescape(text, include_angle_brackets=False)
+    text = text.replace('&gt;', 'AMPERSAND_GREATER_THAN_SEMICOLON')
+    text = text.replace('&lt;', 'AMPERSAND_LESS_THAN_SEMICOLON')
+    text = unescape(text)
+    text = text.replace('AMPERSAND_LESS_THAN_SEMICOLON', '&lt;')
+    text = text.replace('AMPERSAND_GREATER_THAN_SEMICOLON', '&gt;')
+    return text
 
 
 def _get_admin_url(obj, view='change', admin_site_name='admin'):
