@@ -14,7 +14,8 @@ except ImportError:
     from generic.utils.future import resolve_url
 from django.template import Node
 from django.template import TemplateSyntaxError
-from django.template.defaultfilters import stringfilter, fix_ampersands
+from django.template.defaultfilters import stringfilter
+from django.utils.encoding import force_text
 from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe
 from urlparse import urlparse
@@ -252,6 +253,13 @@ def _chunks(l, n):
     """
     for i in xrange(0, len(l), n):
         yield l[i:i+n]
+
+
+# removed in Django 1.8
+unencoded_ampersands_re = re.compile(r'&(?!(\w+|#\d+);)')
+def fix_ampersands(value):
+    """Returns given HTML with all unencoded ampersands encoded correctly."""
+    return unencoded_ampersands_re.sub('&amp;', force_text(value))
 
 
 class UpdateGetNode(template.Node):
