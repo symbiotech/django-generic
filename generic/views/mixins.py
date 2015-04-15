@@ -8,7 +8,7 @@ try:
     from django.shortcuts import resolve_url
 except ImportError:
     from generic.utils.future import resolve_url
-from djanog.utils.http import urlquote
+from django.utils.http import urlquote
 from django.utils.decorators import method_decorator
 
 from .exceptions import RedirectInstead
