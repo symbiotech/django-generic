@@ -6,7 +6,14 @@ from django.conf import settings
 from django.contrib.sites.models import get_current_site
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
-from django.db.models import get_model
+
+try:
+    from django.apps import apps
+    get_model = apps.get_model
+    get_models = apps.get_models
+except ImportError:
+    from django.db.models.loading import get_model, get_models
+
 from django.http import QueryDict
 try:
     from django.shortcuts import resolve_url
