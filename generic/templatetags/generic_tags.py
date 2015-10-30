@@ -3,7 +3,6 @@ import re
 from django import forms
 from django import template
 from django.conf import settings
-from django.contrib.sites.models import get_current_site
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 
