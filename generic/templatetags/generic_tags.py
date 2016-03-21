@@ -24,7 +24,6 @@ from django.template.defaultfilters import stringfilter
 from django.utils.encoding import force_text
 from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe
-from urlparse import urlparse
 
 register = template.Library()
 
@@ -133,6 +132,10 @@ def domain_only(full_url):
     """
     Return only the domain in a url.
     """
+    try:
+        from urllib.parse import urlparse
+    except ImportError:
+        from urlparse import urlparse
     parsed = urlparse(full_url)
     return parsed.netloc.lstrip("www.")
 
