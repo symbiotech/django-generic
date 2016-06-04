@@ -1,7 +1,10 @@
 # from http://docs.python.org/library/csv.html#csv-examples
 
 import csv
-import cStringIO
+try:
+    from io import StringIO
+except ImportError:
+    from cStringIO import StringIO
 import codecs
 
 class UTF8Recoder:
@@ -42,7 +45,7 @@ class Writer:
 
     def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
         # Redirect output to a queue
-        self.queue = cStringIO.StringIO()
+        self.queue = StringIO()
         self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
         self.stream = f
         self.encoder = codecs.getincrementalencoder(encoding)()
