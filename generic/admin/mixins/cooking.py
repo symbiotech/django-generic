@@ -16,10 +16,7 @@ from ..widgets import (
     StackedInlineManyToManyCookedIdWidget,
 )
 
-try:
-    from django.conf.urls import patterns, url
-except ImportError:
-    from django.conf.urls.defaults import patterns, url
+from django.conf.urls import url
 
 try:
     import json
@@ -123,11 +120,11 @@ class CookedIdAdmin(BaseCookedIdAdmin, admin.ModelAdmin):
 
     def get_urls(self):
 
-        urlpatterns = patterns(
-            '',
+        urlpatterns = [
             url(r'^cook-ids/(?P<field_name>\w+)/(?P<raw_ids>[\d,]+)/$',
-                self.admin_site.admin_view(self.cook_ids))
-        )
+                self.admin_site.admin_view(self.cook_ids)
+            )
+        ]
 
         # add any inline cooked ID urls...
 
@@ -135,11 +132,11 @@ class CookedIdAdmin(BaseCookedIdAdmin, admin.ModelAdmin):
             try:
                 if inline.cooked_id_fields:
                     content_type = ContentType.objects.get_for_model(inline.model)
-                    urlpatterns += patterns(
-                        '',
+                    urlpatterns += [
                         url(r'^cook-ids-inline/(?P<model_name>'+content_type.model+')/(?P<field_name>\w+)/(?P<raw_ids>[\d,]+)/$',
-                            self.admin_site.admin_view(self.cook_ids_inline))
-                    )
+                            self.admin_site.admin_view(self.cook_ids_inline)
+                        )
+                    ]
             except AttributeError:
                 # probably not a TabularInlineCookedIdAdmin
                 pass

@@ -1,9 +1,6 @@
 from django import forms
 from django import http
-try:
-    from django.conf.urls import patterns, url
-except ImportError:
-    from django.conf.urls.defaults import patterns, url
+from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.admin import helpers
 from django.core.exceptions import ValidationError
@@ -202,14 +199,13 @@ class BatchUpdateAdmin(admin.ModelAdmin):
         )
 
     def get_urls(self):
-        return patterns(
-            '',
+        return [
             url(r'^batch-update/$',
                 self.admin_site.admin_view(self.batch_update_view),
                 name=self._get_url_name(
                     'batchupdate', include_namespace=False),
             ),
-        ) + super(BatchUpdateAdmin, self).get_urls()
+        ] + super(BatchUpdateAdmin, self).get_urls()
 
     def get_actions(self, request):
         actions = super(BatchUpdateAdmin, self).get_actions(request)

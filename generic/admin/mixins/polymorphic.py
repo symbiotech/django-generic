@@ -11,12 +11,7 @@ except ImportError:
 from django.apps import apps
 from django.utils.translation import ugettext_lazy as _
 
-try:
-    # Prevent deprecation warnings on Django >= 1.4
-    from django.conf.urls import patterns, url
-except ImportError:
-    # For compatibility with Django <= 1.3
-    from django.conf.urls.defaults import patterns, url
+from django.conf.urls import url
 
 from ...utils.inheritance import get_subclasses
 
@@ -158,9 +153,9 @@ class PolymorphicAdmin(admin.ModelAdmin):
         urls = super(PolymorphicAdmin, self).get_urls(*args, **kwargs)
         for subclass in get_subclasses(self.model):
             info = subclass._meta.app_label, subclass._meta.model_name
-            urls += patterns('',
+            urls += [
                 url(r'^(.+)/$',
                     lambda *a, **k: None, # This never gets called
                     name='%s_%s_change' % info),
-            )
+            ]
         return urls
