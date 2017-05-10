@@ -3,7 +3,6 @@ import logging
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.core import mail
-from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.test import RequestFactory
 from ..templatetags.generic_tags import html_to_text
@@ -29,12 +28,12 @@ class EmailMessage(mail.EmailMessage):
         super(EmailMessage, self).__init__(*args, **kwargs)
 
         if self.template_name and not self.body:
-            if self.use_context_processors:
-                context = RequestContext(self.request)
-                context.update(self.context)
-            else:
-                context = self.context
-            self.body = render_to_string(self.template_name, context)
+            context = self.context
+            self.body = render_to_string(
+                self.template_name,
+                context,
+                self.request if self.use_context_processors else None
+            )
 
     def send_separately(self, fail_silently=False):
         # where there are multiple recipients in the 'to' field, send
@@ -101,24 +100,22 @@ class TemplateEmail(mail.EmailMultiAlternatives):
                     self.body = html_to_text(html)
 
     def _get_context(self, base_template):
-        if self.process_context:
-            context = RequestContext(self.request)
-            context.update(self.context)
-        else:
-            context = self.context
+        context = self.context
         context['base_template'] = base_template
         return context
 
     def render_body(self):
         return render_to_string(
             self.template_name,
-            self._get_context(self.base_body_template)
+            self._get_context(self.base_body_template),
+            self.request if self.process_request else None
         )
 
     def render_subject(self):
         return render_to_string(
             self.template_name,
-            self._get_context(self.base_subject_template)
+            self._get_context(self.base_subject_template),
+            self.request if self.process_request else None
         ).replace('\n', ' ').strip() # enforce single-line
 
     def render_html(self):
