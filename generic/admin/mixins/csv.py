@@ -1,3 +1,5 @@
+import django
+
 from django import http
 from django.contrib import admin
 from django.template import defaultfilters
@@ -14,7 +16,10 @@ class CSVExportAdmin(admin.ModelAdmin):
         )
 
     def csv_export(self, request, queryset):
-        response = http.HttpResponse(mimetype='text/csv')
+        content_type_kwarg = (
+            'content_type' if django.VERSION >= (1,7) else 'mimetype'
+        )
+        response = http.HttpResponse(**{content_type_kwarg: 'text/csv'})
         response['Content-Disposition'] = 'attachment; filename={0}'.format(
             self.csv_export_filename(request)
         )
