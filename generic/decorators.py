@@ -4,6 +4,7 @@ except ImportError:
     from django.utils import simplejson as json
 
 from functools import wraps
+import django
 from django.conf import settings
 try:
     from django.core.cache import cache, get_cache
@@ -116,5 +117,11 @@ def json_view(view):
         except TypeError:
             json_data = json.dumps(
                 {'result': False, 'reason': 'Error encoding JSON response'})
-        return HttpResponse(json_data, mimetype='application/json')
+        content_type_kwarg = (
+            'content_type' if django.VERSION >= (1,7) else 'mimetype'
+        )
+        return HttpResponse(
+            json_data,
+            **{content_type_kwarg: 'application/json'}
+        )
     return wrapped_view
