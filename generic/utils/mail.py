@@ -108,14 +108,14 @@ class TemplateEmail(mail.EmailMultiAlternatives):
         return render_to_string(
             self.template_name,
             self._get_context(self.base_body_template),
-            self.request if self.process_request else None
+            self.request if self.process_context else None
         )
 
     def render_subject(self):
         return render_to_string(
             self.template_name,
             self._get_context(self.base_subject_template),
-            self.request if self.process_request else None
+            self.request if self.process_context else None
         ).replace('\n', ' ').strip() # enforce single-line
 
     def render_html(self):
