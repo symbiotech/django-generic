@@ -23,7 +23,7 @@ class CSVExportAdmin(admin.ModelAdmin):
         response['Content-Disposition'] = 'attachment; filename={0}'.format(
             self.csv_export_filename(request)
         )
-        writer = csv.Writer(response)
+        writer = csv.writer(response)
         fields = self.csv_export_fields(request)
         writer.writerow([title for title, key in fields])
         # TODO: detect absence of callables and use efficient .values query
