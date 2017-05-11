@@ -1,10 +1,10 @@
+import csv
 import django
 
 from django import http
 from django.contrib import admin
 from django.template import defaultfilters
 from django.utils.translation import ugettext_lazy as _
-from ...utils import unicode_csv
 
 class CSVExportAdmin(admin.ModelAdmin):
     def _get_url_name(self, view_name, include_namespace=True):
@@ -23,7 +23,7 @@ class CSVExportAdmin(admin.ModelAdmin):
         response['Content-Disposition'] = 'attachment; filename={0}'.format(
             self.csv_export_filename(request)
         )
-        writer = unicode_csv.Writer(response)
+        writer = csv.Writer(response)
         fields = self.csv_export_fields(request)
         writer.writerow([title for title, key in fields])
         # TODO: detect absence of callables and use efficient .values query
