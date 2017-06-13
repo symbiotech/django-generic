@@ -98,7 +98,7 @@ class TestCase(django.test.TestCase):
             if ignore_querystring and re.match(
                     r"Response redirected to '(.*){0}\?.*', "
                     r"expected '\1{0}'".format(expected_url),
-                    unicode(e)
+                    str(e)
             ):
                 pass # silence AssertionError; only query string differed
             else:
@@ -268,7 +268,7 @@ class _VerboseAssertNumQueriesContext(_AssertNumQueriesContext):
             logger.warning(
                 '\n    '.join(
                     ['Unexpected queries (%s):' % e] +
-                    map(unicode, queries)
+                    map(str, queries)
                 )
             )
             raise

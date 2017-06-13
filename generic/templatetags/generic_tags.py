@@ -5,6 +5,7 @@ from django import template
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
+from django.utils.encoding import force_text
 
 try:
     from django.apps import apps
@@ -300,7 +301,7 @@ class UpdateGetNode(template.Node):
                     elif hasattr(actual_val, '__iter__'):
                         GET.setlist(actual_attr, actual_val)
                     else:
-                        GET[actual_attr] = unicode(actual_val)
+                        GET[actual_attr] = force_text(actual_val)
                 elif op == "+=":
                     if actual_val is None or actual_val == []:
                         if GET.has_key(actual_attr):
@@ -308,7 +309,7 @@ class UpdateGetNode(template.Node):
                     elif hasattr(actual_val, '__iter__'):
                         GET.setlist(actual_attr, GET.getlist(actual_attr) + list(actual_val))
                     else:
-                        GET.appendlist(actual_attr, unicode(actual_val))
+                        GET.appendlist(actual_attr, force_text(actual_val))
                 elif op == "-=":
                     li = GET.getlist(actual_attr)
                     if hasattr(actual_val, '__iter__'):
@@ -317,7 +318,7 @@ class UpdateGetNode(template.Node):
                                 li.remove(v)
                         GET.setlist(actual_attr, li)
                     else:
-                        actual_val = unicode(actual_val)
+                        actual_val = force_text(actual_val)
                         if actual_val in li:
                             li.remove(actual_val)
                         GET.setlist(actual_attr, li)
@@ -427,8 +428,8 @@ def _admin_link(tag_name, link_type, context, **kwargs):
     # TODO: i18n
     link_text = kwargs.pop('link_text').replace(
         '<verbose_name>',
-        unicode(model._meta.verbose_name)
-    ).replace('<instance_unicode>', unicode(instance))
+        force_text(model._meta.verbose_name)
+    ).replace('<instance_unicode>', force_text(instance))
 
     querystring_dict = QueryDict('', mutable=True)
     if return_url:

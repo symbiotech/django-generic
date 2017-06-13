@@ -34,11 +34,11 @@ def cache_method(cache_name=None):
             )
             for value in args:
                 if isinstance(value, (list, tuple)):
-                    value = ','.join(map(unicode, value))
+                    value = ','.join(map(str, value))
                 cache_key += '-%s' % value
             for key, value in kwargs.iteritems():
                 if isinstance(value, (list, tuple)):
-                    value = ','.join(map(unicode, value))
+                    value = ','.join(map(str, value))
                 cache_key += '-%s=%s' % (key, value)
             debug_info = [cache_key]
 

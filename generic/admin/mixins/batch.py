@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.template.response import TemplateResponse
+from django.utils.encoding import force_text
 from django.utils.translation import ungettext_lazy, ugettext_lazy as _
 from copy import copy
 
@@ -169,7 +170,9 @@ class BatchUpdateAdmin(admin.ModelAdmin):
                 ) % {
                     'field_list': u', '.join(
                         [
-                            unicode(self.model._meta.get_field(name).verbose_name)
+                            force_text(
+                                self.model._meta.get_field(name).verbose_name
+                            )
                             for name in form.fields_to_update
                         ]
                     ),
