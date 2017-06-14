@@ -94,7 +94,7 @@ class TestCase(django.test.TestCase):
         try:
             super(TestCase, self).assertRedirects(
                 response, expected_url, *args, **kwargs)
-        except AssertionError, e:
+        except AssertionError as e:
             if ignore_querystring and re.match(
                     r"Response redirected to '(.*){0}\?.*', "
                     r"expected '\1{0}'".format(expected_url),
@@ -259,7 +259,7 @@ class _VerboseAssertNumQueriesContext(_AssertNumQueriesContext):
         try:
             super(_VerboseAssertNumQueriesContext, self).__exit__(
                 exc_type, exc_value, traceback)
-        except AssertionError, e:
+        except AssertionError as e:
             start = getattr(
                 self, 'initial_queries', getattr(self, 'starting_queries', 0)
             )
