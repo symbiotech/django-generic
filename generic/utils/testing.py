@@ -301,7 +301,7 @@ class SeleniumTests(LiveServerTestCase):
                 )
             )
         if mail.outbox and 'Internal Server Error' in mail.outbox[-1].subject:
-            print mail.outbox[-1].body
+            print(mail.outbox[-1].body)
         super(SeleniumTests, self).tearDown()
 
     def get(self, url, *args, **kwargs):
@@ -350,5 +350,5 @@ class SeleniumTests(LiveServerTestCase):
         return self.driver.current_url.replace(self.live_server_url, '', 1)
 
     def print_text(self, container_tag='body'):
-        print self.driver.find_element_by_tag_name(container_tag).text
+        print(self.driver.find_element_by_tag_name(container_tag).text)
 
