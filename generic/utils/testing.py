@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def get_hash(string, length=8):
     """ Shortcut for generating short hash strings """
-    return hashlib.sha1(string).hexdigest()[:length]
+    return hashlib.sha1(string.encode('utf-8')).hexdigest()[:length]
 
 def reloaded(obj):
     """ Reload an object from the database """
