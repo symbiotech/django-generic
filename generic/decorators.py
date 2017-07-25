@@ -117,11 +117,8 @@ def json_view(view):
         except TypeError:
             json_data = json.dumps(
                 {'result': False, 'reason': 'Error encoding JSON response'})
-        content_type_kwarg = (
-            'content_type' if django.VERSION >= (1,7) else 'mimetype'
-        )
         return HttpResponse(
             json_data,
-            **{content_type_kwarg: 'application/json'}
+            content_type='application/json',
         )
     return wrapped_view

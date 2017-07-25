@@ -35,9 +35,6 @@ class View(django.views.generic.View):
         """ Hook for any last-minute response tweaking; e.g. JSON for AJAX """
         if self.request.is_ajax() and response.status_code == 302:
             if self.ajax_catch_redirects:
-                content_type_kwarg = (
-                    'content_type' if django.VERSION >= (1,7) else 'mimetype'
-                )
                 return http.HttpResponse(
                     json.dumps(
                         {
@@ -45,7 +42,7 @@ class View(django.views.generic.View):
                             'result': self.result_text,
                         }
                     ),
-                    **{content_type_kwarg: 'application/json'}
+                    content_type='application/json',
                 )
         return response
 

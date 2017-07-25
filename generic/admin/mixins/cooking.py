@@ -82,12 +82,9 @@ class BaseCookedIdAdmin:
         else:
             pass # graceful-ish.
 
-        content_type_kwarg = (
-            'content_type' if django.VERSION >= (1,7) else 'mimetype'
-        )
         return http.HttpResponse(
             json.dumps(response_data),
-            **{content_type_kwarg: 'application/json'}
+            content_type='application/json',
         )
 
     def assert_cooked_target_admin(self, db_field):

@@ -16,10 +16,7 @@ class CSVExportAdmin(admin.ModelAdmin):
         )
 
     def csv_export(self, request, queryset):
-        content_type_kwarg = (
-            'content_type' if django.VERSION >= (1,7) else 'mimetype'
-        )
-        response = http.HttpResponse(**{content_type_kwarg: 'text/csv'})
+        response = http.HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename={0}'.format(
             self.csv_export_filename(request)
         )
