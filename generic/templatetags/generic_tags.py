@@ -499,13 +499,13 @@ def change_link(context, obj, **kwargs):
     return _admin_link('change_link', 'change', context, **defaults)
 
 
-@register.assignment_tag(takes_context=True)
+@register.simple_tag(takes_context=True)
 def get_add_link(context, model_string, **kwargs):
     """ {% get_add_link 'myapp.Model' as add_link %} {% if add_link %} ...  """
     return add_link(context, model_string, **kwargs)
 
 
-@register.assignment_tag(takes_context=True)
+@register.simple_tag(takes_context=True)
 def get_change_link(context, obj, **kwargs):
     """ {% get_change_link obj as change_link %} {% if change_link %} ...  """
     return change_link(context, obj, **kwargs)
