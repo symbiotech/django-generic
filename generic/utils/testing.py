@@ -12,7 +12,7 @@ except ImportError:
 else:
     User = get_user_model()
 from django.core import mail
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import DEFAULT_DB_ALIAS, connections
 try:
     from django.shortcuts import resolve_url

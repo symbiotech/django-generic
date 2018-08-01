@@ -4,7 +4,7 @@ from django import forms
 from django import template
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.encoding import force_text
 
 try:
