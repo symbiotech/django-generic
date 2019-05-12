@@ -12,7 +12,8 @@ class Command(AppCommand):
             app_label=app_name, permission__isnull=True
         ):
             for codename, name in _get_all_permissions(
-                ctype.model_class()._meta
+                    ctype.model_class()._meta,
+                    ctype,
             ):
                 p, created = Permission.objects.get_or_create(
                     codename=codename,
