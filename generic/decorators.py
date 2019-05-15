@@ -36,7 +36,7 @@ def cache_method(cache_name=None):
                 if isinstance(value, (list, tuple)):
                     value = ','.join(map(str, value))
                 cache_key += '-%s' % value
-            for key, value in kwargs.iteritems():
+            for key, value in kwargs.items():
                 if isinstance(value, (list, tuple)):
                     value = ','.join(map(str, value))
                 cache_key += '-%s=%s' % (key, value)
@@ -53,7 +53,7 @@ def cache_method(cache_name=None):
                     logger.warning('Cache error: {0}'.format(e))
                     result = None
                 if result is None:
-                    if not cache_obj.has_key(cache_key):
+                    if cache_key not in cache_obj:
                         debug_info.append('miss')
                         result = method(self, *args, **kwargs)
                         cache_obj.set(cache_key, result)
@@ -63,7 +63,7 @@ def cache_method(cache_name=None):
                     debug_info.append('hit')
             debug_info.append(result)
             if getattr(settings, 'GENERIC_CACHE_METHOD_DEBUG', False):
-                logger.debug(u' -- '.join(map(unicode, debug_info)))
+                logger.debug(' -- '.join(map(str, debug_info)))
             return result
         return wrapped_method
     return inner

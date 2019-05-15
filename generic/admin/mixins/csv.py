@@ -1,4 +1,4 @@
-import csv
+from . import csv
 import django
 
 from django import http
