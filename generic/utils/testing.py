@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import hashlib
 import logging
@@ -157,7 +157,7 @@ class TestCase(django.test.TestCase):
                         case_sensitive=False
                     )
                 if 'context' in attributes:
-                    for key, value in attributes.pop('context').iteritems():
+                    for key, value in attributes.pop('context').items():
                         if callable(value):
                             self.assertTrue(value(response.context[key]))
                         else:
@@ -240,9 +240,9 @@ class TestCase(django.test.TestCase):
             message.body,
         )
         if path_only:
-            return zip(*matches)[2]
+            return list(zip(*matches))[2]
         else:
-            return map(''.join, matches)
+            return list(map(''.join, matches))
 
     def extract_url_from_email(self, message=None, path_only=True):
         urls = self.extract_urls_from_email(message, path_only)
@@ -268,7 +268,7 @@ class _VerboseAssertNumQueriesContext(_AssertNumQueriesContext):
             logger.warning(
                 '\n    '.join(
                     ['Unexpected queries (%s):' % e] +
-                    map(str, queries)
+                    list(map(str, queries))
                 )
             )
             raise
@@ -331,7 +331,7 @@ class SeleniumTests(LiveServerTestCase):
                     option.click()
                     return
             logger.warning(
-                u"Couldn't find select[name={0}] value ({1})".format(
+                "Couldn't find select[name={0}] value ({1})".format(
                     field_name,
                     value,
                 )
@@ -340,7 +340,7 @@ class SeleniumTests(LiveServerTestCase):
             input.send_keys(value)
 
     def fill_fields(self, data):
-        for field_name, value in data.iteritems():
+        for field_name, value in data.items():
             self.fill_field(field_name, value)
 
     def submit_form(self):

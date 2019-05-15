@@ -71,14 +71,14 @@ def htmlparser_unescape(s):
                     c = int(s[1:], 16)
                 else:
                     c = int(s)
-                return unichr(c)
+                return chr(c)
         except ValueError:
             return '&#'+s+';'
         else:
-            import htmlentitydefs
-            entitydefs = {'apos':u"'"}
-            for k, v in htmlentitydefs.name2codepoint.iteritems():
-                entitydefs[k] = unichr(v)
+            import html.entities
+            entitydefs = {'apos':"'"}
+            for k, v in html.entities.name2codepoint.items():
+                entitydefs[k] = chr(v)
             try:
                 return entitydefs[s]
             except KeyError:
@@ -136,7 +136,7 @@ def domain_only(full_url):
     try:
         from urllib.parse import urlparse
     except ImportError:
-        from urlparse import urlparse
+        from urllib.parse import urlparse
     parsed = urlparse(full_url)
     return parsed.netloc.lstrip("www.")
 
@@ -174,7 +174,7 @@ class SplitListNode(Node):
 
     def split_seq(self, list, cols=2):
         start = 0
-        for i in xrange(cols):
+        for i in range(cols):
             stop = start + len(list[i::cols])
             yield list[start:stop]
             start = stop
@@ -261,7 +261,7 @@ def do_update_GET(parser, token):
 def _chunks(l, n):
     """ Yield successive n-sized chunks from l.
     """
-    for i in xrange(0, len(l), n):
+    for i in range(0, len(l), n):
         yield l[i:i+n]
 
 
@@ -296,7 +296,7 @@ class UpdateGetNode(template.Node):
             if actual_attr:
                 if op == "=":
                     if actual_val is None or actual_val == []:
-                        if GET.has_key(actual_attr):
+                        if actual_attr in GET:
                             del GET[actual_attr]
                     elif hasattr(actual_val, '__iter__'):
                         GET.setlist(actual_attr, actual_val)
@@ -304,7 +304,7 @@ class UpdateGetNode(template.Node):
                         GET[actual_attr] = force_text(actual_val)
                 elif op == "+=":
                     if actual_val is None or actual_val == []:
-                        if GET.has_key(actual_attr):
+                        if actual_attr in GET:
                             del GET[actual_attr]
                     elif hasattr(actual_val, '__iter__'):
                         GET.setlist(actual_attr, GET.getlist(actual_attr) + list(actual_val))
