@@ -17,10 +17,10 @@ def make_rich(base):
                 )
             )
 
-        def formfield_for_dbfield(self, db_field, **kwargs):
+        def formfield_for_dbfield(self, db_field, request, **kwargs):
             formfield = super(
                 BaseRichTextModelAdmin, self
-            ).formfield_for_dbfield(db_field, **kwargs)
+            ).formfield_for_dbfield(db_field, request, **kwargs)
             if db_field.name in self.rich_fields:
                 formfield.widget.attrs.update({'class': 'rich-text'})
             return formfield
