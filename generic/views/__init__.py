@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import logout as auth_logout
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render, redirect
 
 try:
     # Prevent deprecation warnings on Django >= 1.4
@@ -24,7 +24,7 @@ def server_error(request, template_name='500.html'):
     context = dict(settings.TEMPLATE_CONSTANTS)
     context['MEDIA_URL'] = settings.MEDIA_URL
     context['STATIC_URL'] = settings.STATIC_URL
-    return render_to_response(template_name, context)
+    return render(request, template_name, context)
 
 def logout(request):
     """
